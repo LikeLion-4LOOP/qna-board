@@ -16,7 +16,7 @@
 ## 🛠 기술 스택
 
 **Backend**: Java 21, Spring Boot 3.x, MySQL  
-**Frontend**: Next.js 
+**Frontend**: Next.js
 **Tools**: Gradle
 
 ## 📂 프로젝트 구조
