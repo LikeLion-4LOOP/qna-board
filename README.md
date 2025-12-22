@@ -1,4 +1,4 @@
-# qna-board
+# 🙋‍♂️qna-board
 
 질문과 답변을 통해 지식을 공유하는 커뮤니티 플랫폼
 
@@ -16,8 +16,8 @@
 ## 🛠 기술 스택
 
 **Backend**: Java 21, Spring Boot 3.x, MySQL  
-**Frontend**: Next.js, React  
-**Tools**: Gradle, Axios
+**Frontend**: Next.js 
+**Tools**: Gradle
 
 ## 📂 프로젝트 구조
 ```
