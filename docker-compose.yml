@@ -16,7 +16,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: backend/Dockerfile
+      dockerfile: Dockerfile
     container_name: qna-backend
     depends_on:
       - mysql
