@@ -1,4 +1,4 @@
-package com.example.qnaboard.domain;
+package com.example.qnaboard.domain.comment;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

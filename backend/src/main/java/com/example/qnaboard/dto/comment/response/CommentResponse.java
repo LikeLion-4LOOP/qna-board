@@ -1,4 +1,4 @@
-package com.example.qnaboard.dto.response;
+package com.example.qnaboard.dto.comment.response;
 
 
 import java.time.LocalDateTime;

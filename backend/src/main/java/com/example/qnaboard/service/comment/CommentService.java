@@ -1,6 +1,6 @@
-package com.example.qnaboard.comment.service;
+package com.example.qnaboard.service.comment;
 
-import com.example.qnaboard.dto.response.CommentResponse;
+import com.example.qnaboard.dto.comment.response.CommentResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

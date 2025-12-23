@@ -1,9 +1,7 @@
-package com.example.qnaboard.repository;
+package com.example.qnaboard.repository.comment;
 
-import com.example.qnaboard.domain.Comment;
+import com.example.qnaboard.domain.comment.Comment;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.List;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
