@@ -1,6 +1,8 @@
 package com.example.qnaboard.service.comment;
 
 import com.example.qnaboard.dto.comment.response.CommentResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,7 +16,20 @@ public class CommentService {
     }
 
     /* 댓글 목록 조회 */
-    public List<CommentResponse> getComments() {
+    // 게시글에 달린 댓글 목록 조회
+    public Page<CommentResponse> getCommentsByPost(
+            Long postId,
+            boolean isQuestion,
+            Pageable pageable
+    ) {
+        return null;
+    }
+
+    // 내가 작성한 댓글 목록 조회
+    public Page<CommentResponse> getMyComments(
+            Long userId,
+            Pageable pageable
+    ) {
         return null;
     }
 
