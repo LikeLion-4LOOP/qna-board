@@ -1,8 +1,12 @@
 package com.example.qnaboard.service;
 
+import com.example.qnaboard.domain.answer.Answer;
 import com.example.qnaboard.dto.answer.AnswerCreateRequestDto;
 import com.example.qnaboard.dto.answer.AnswerResponseDto;
 import com.example.qnaboard.dto.answer.AnswerUpdateRequestDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 
 import java.util.List;
 
@@ -34,4 +38,7 @@ public interface AnswerService {
 
     // 답변 추천
     void voteAnswer(Long answerId, Long userId);
+
+    // pageable
+    Page<Answer> getAnswersByUserId(Long userId, Pageable pageable);
 }
