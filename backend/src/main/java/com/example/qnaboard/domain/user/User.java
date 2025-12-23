@@ -31,5 +31,5 @@ public class User {
     private Level level;
 
     @Column(nullable = false)
-    private LocalDateTime localDateTime
+    private LocalDateTime localDateTime;
 }
