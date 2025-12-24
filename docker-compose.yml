@@ -1,7 +1,7 @@
+
 services:
   mysql:
     image: mysql:8.0
-    platform: linux/x86_64
     environment:
       MYSQL_DATABASE: qna_dev
       MYSQL_USER: qna
@@ -28,7 +28,7 @@ services:
       DB_PASSWORD: qna123
     ports:
       - "8080:8080"
-    restart: unless-stopped
+    restart : unless-stopped
 
 volumes:
   mysql_data:
