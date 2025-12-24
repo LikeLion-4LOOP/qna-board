@@ -1,6 +1,5 @@
-package com.example.qnaboard.service;
+package com.example.qnaboard.service.quesiton;
 
-import com.example.qnaboard.dto.question.QuestionResponseDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -9,10 +8,8 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class QuestionService {
     // private final QuestionRepository questionRepository;
-
     // 질문 목록 조회
-    public List<QuestionResponseDTO>questionResponseDTOS;
+    // public List<QuestionResponseDto>questionResponseDTOS;
 }
