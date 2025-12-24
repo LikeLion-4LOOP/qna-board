@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.cglib.core.Local;
 
 import java.time.LocalDateTime;
 
@@ -30,6 +29,25 @@ public class User {
     @Column(nullable = false, length = 20)
     private Level level;
 
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
     @Column(nullable = false)
-    private LocalDateTime localDateTime;
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    private void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    private void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateUsername(String username) {
+        this.username = username;
+    }
 }
