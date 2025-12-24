@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class AnswerCreateRequestDto {
+public class AnswerCreateRequest {
     private String content;
 
     // validation 추가
