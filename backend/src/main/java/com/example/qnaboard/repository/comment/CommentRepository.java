@@ -15,8 +15,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     );
 
     // 내가 작성한 댓글 목록
-    Page<Comment> findByUserId(
-            Long userId,
-            Pageable pageable
-    );
+//    Page<Comment> findByUser(
+//            User user,
+//            Pageable pageable
+//    );
 }

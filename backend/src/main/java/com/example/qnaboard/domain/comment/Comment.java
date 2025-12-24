@@ -9,14 +9,17 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name="comments")
 public class Comment {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length=1024)
+    @Column(nullable = false, length=1000)
     private String content;
 
+    //@ManyToOne(fetch = FetchType.LAZY, optional = false)
+    //@JoinColumn(name="user_id")
     //private User user;
 
     @Column(nullable=false)
@@ -28,15 +31,23 @@ public class Comment {
     @Column(nullable=false)
     private LocalDateTime createdAt;
 
-    @Column(nullable=false)
     private LocalDateTime updatedAt;
 
 
+//    public Comment(String content, User user, Boolean isQuestion, Long postId) {
+//        this.content = content;
+//        this.user = user;
+//        this.isQuestion = isQuestion;
+//        this.postId = postId;
+//    }
+
+    public void updateContent(String content) {
+        this.content = content;
+    }
+
     @PrePersist
     protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        this.createdAt = now;
-        this.updatedAt = now;
+        this.createdAt = LocalDateTime.now();
     }
 
     @PreUpdate
