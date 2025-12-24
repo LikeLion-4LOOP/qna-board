@@ -1,7 +1,7 @@
 package com.example.qnaboard.controller.answer;
 
 import com.example.qnaboard.domain.answer.Answer;
-import com.example.qnaboard.service.AnswerService;
+import com.example.qnaboard.service.answer.AnswerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
