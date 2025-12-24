@@ -1,6 +1,6 @@
 package com.example.qnaboard.service;
 
-import com.example.qnaboard.dto.QuestionResponseDTO;
+import com.example.qnaboard.dto.question.QuestionResponseDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

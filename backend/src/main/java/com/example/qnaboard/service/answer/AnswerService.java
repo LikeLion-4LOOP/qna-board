@@ -1,7 +1,7 @@
-package com.example.qnaboard.service;
+package com.example.qnaboard.service.answer;
 
 import com.example.qnaboard.domain.answer.Answer;
-import com.example.qnaboard.dto.answer.AnswerCreateRequestDto;
+import com.example.qnaboard.dto.answer.AnswerCreateRequest;
 import com.example.qnaboard.dto.answer.AnswerResponseDto;
 import com.example.qnaboard.dto.answer.AnswerUpdateRequestDto;
 import org.springframework.data.domain.Page;
@@ -15,7 +15,7 @@ public interface AnswerService {
     AnswerResponseDto createAnswer(
             Long questionId,
             Long userId,
-            AnswerCreateRequestDto requestDto
+            AnswerCreateRequest requestDto
     );
     /* service레벨에서 책임*/
 
@@ -31,7 +31,7 @@ public interface AnswerService {
     void deleteAnswer(Long answerId, Long userId);
 
     // 답변 목록 조회
-    List<AnswerResponseDto> getAnswersByQuestion(Long questionId);
+    Page<AnswerResponseDto> getAnswersByQuestion(Long questionId, Pageable pageable);
 
     // 답변 채택
     void selectAnswer(Long answerId, Long userId);

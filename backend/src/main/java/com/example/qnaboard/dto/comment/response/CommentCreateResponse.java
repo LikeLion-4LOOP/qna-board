@@ -2,8 +2,8 @@ package com.example.qnaboard.dto.comment.response;
 
 import java.time.LocalDateTime;
 
-//댓글목록조회 dto ->post.id를 기준으로 목록조회
-public record CommentResponse(
+//댓글작성 dto
+public record CommentCreateResponse(
 
         Long commentId,
         Long postId,
