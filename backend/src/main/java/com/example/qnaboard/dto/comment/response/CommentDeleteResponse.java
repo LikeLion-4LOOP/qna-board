@@ -1,4 +1,4 @@
-package com.example.qnaboard.dto.comment;
+package com.example.qnaboard.dto.comment.response;
 
 //댓글삭제 dto
 public record CommentDeleteResponse(
