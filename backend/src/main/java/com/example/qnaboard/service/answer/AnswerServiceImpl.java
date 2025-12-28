@@ -28,7 +28,7 @@ public class AnswerServiceImpl implements AnswerService {
         Answer answer = new Answer();
         answer.setContent(requestDto.getContent());
         answer.setQuestionId(questionId);   // 임시 필드
-        answer.setUserid(userId);           // 임시 필드
+        answer.setUserId(userId);           // 임시 필드
         answer.setVote(0);
         answer.setSelect(false);
         answer.setCreatedAt(LocalDateTime.now());
@@ -141,9 +141,9 @@ public class AnswerServiceImpl implements AnswerService {
     }
 
     private void validateOwner(Answer answer, Long userId) {
-        if (answer.getUserid() == null
+        if (answer.getUserId() == null
                 || userId == null
-                || !answer.getUserid().equals(userId)) {
+                || !answer.getUserId().equals(userId)) {
             throw new BusinessException(AnswerErrorCode.ANSWER_FORBIDDEN);
         }
     }
