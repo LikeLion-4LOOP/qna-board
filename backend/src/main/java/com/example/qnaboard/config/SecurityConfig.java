@@ -25,26 +25,24 @@ public class SecurityConfig {
 
     /**
      * SecurityFilterChain
-     * - JWT 기반 API 서버의 기본 뼈대
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // [JWT 정석] 세션 기반이 아니므로 CSRF 비활성화
+                // CSRF 비활성화
                 .csrf(csrf -> csrf.disable())
-                // CORS는 필요 시 추후 설정(지금은 defaults)
+                // CORS는 필요 시 추후 설정
                 .cors(Customizer.withDefaults())
 
-                // [필수] Stateless: 세션 저장 X
+                // 세션 저장 X
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // [API 서버] 폼로그인/기본인증 끔
+                // 폼로그인/기본인증 끔
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
 
-                // [인가] auth는 열고 그 외는 인증 필요
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/auth/**","/users/signup").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(

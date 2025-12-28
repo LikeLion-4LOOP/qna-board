@@ -12,12 +12,22 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users")
 public class User {
+    public User(String userId, String encodedPassword ,String username) {
+        this.userId = userId;
+        this.username = username;
+        this.password = encodedPassword;
+        this.point = 0;
+        this.level = Level.BRONZE;
+    }
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(nullable = false)
     private String username;
+
+    @Column(nullable = false, unique = true, length = 50)
+    private String userId;
 
     @Column(nullable = false)
     private String password;

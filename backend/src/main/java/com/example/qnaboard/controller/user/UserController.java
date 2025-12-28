@@ -1,9 +1,11 @@
 package com.example.qnaboard.controller.user;
 
+import com.example.qnaboard.dto.user.request.SignupRequest;
 import com.example.qnaboard.dto.user.request.UpdateUsernameRequest;
 import com.example.qnaboard.dto.user.response.*;
 import com.example.qnaboard.security.CustomUserDetails;
 import com.example.qnaboard.service.user.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +27,12 @@ public class UserController {
     @GetMapping("/")
     public UserResponse getUser(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
         return userService.getUser(customUserDetails.getUserId());
+    }
+
+    //회원가입
+    @PostMapping("/signup")
+    public SignupResponse signup(@Valid @RequestBody SignupRequest req) {
+        return userService.signup(req);
     }
 
     // 내 정보 수정 (username)

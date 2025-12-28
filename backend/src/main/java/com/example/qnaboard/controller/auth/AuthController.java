@@ -21,7 +21,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public TokenResponse login(@RequestBody LoginRequest req) {
-        return authService.login(req.getUsername(), req.getPassword(), req.getDeviceId());
+        return authService.login(req.getUserId(), req.getPassword(), req.getDeviceId());
     }
 
     /**

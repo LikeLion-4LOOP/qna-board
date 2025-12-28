@@ -16,11 +16,11 @@ spring:
         format_sql: true
     show-sql: true
 
-  logging:
-    level:
-      root: INFO
-      com.example.qnaboard: debug
-  jwt:
-    secret: "CXNS7z5LCOqVE6Y4VuR6IPyru4qvDQv7"
-    access-exp-ms: 900000        # 15분
-    refresh-exp-ms: 1209600000   # 14일
+logging:
+  level:
+    root: info
+    com.example.qnaboard: debug
+jwt:
+  secret: "CXNS7z5LCOqVE6Y4VuR6IPyru4qvDQv7"
+  access-exp-ms: 900000        # 15분
+  refresh-exp-ms: 1209600000   # 14일
