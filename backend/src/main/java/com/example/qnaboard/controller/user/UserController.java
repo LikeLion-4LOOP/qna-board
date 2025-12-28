@@ -24,7 +24,7 @@ public class UserController {
     /**
      * 내 정보 조회
      */
-    @GetMapping("/")
+    @GetMapping("")
     public UserResponse getUser(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
         return userService.getUser(customUserDetails.getUserId());
     }
@@ -36,7 +36,7 @@ public class UserController {
     }
 
     // 내 정보 수정 (username)
-    @PatchMapping("/")
+    @PatchMapping("")
     public UserResponse updateUsername(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestBody UpdateUsernameRequest request

@@ -38,7 +38,12 @@ public enum AuthErrorCode implements ErrorCode {
     NOT_MATCH_DEVICE(
             HttpStatus.UNAUTHORIZED,
             "AUTH_401_4",
-                    "디바이스가 일치하지 않습니다"
+            "디바이스가 일치하지 않습니다"
+    ),
+    NOT_MATCH_REFRESH_TOKEN(
+            HttpStatus.UNAUTHORIZED,
+            "AUTH_401_5",
+            "존재하지 않는 refreshToken입니다."
     );
 
     private final HttpStatus status;

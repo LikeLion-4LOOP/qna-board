@@ -10,6 +10,7 @@ import com.example.qnaboard.repository.auth.RefreshTokenRepository;
 import com.example.qnaboard.repository.user.UserRepository;
 import com.example.qnaboard.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -81,7 +83,7 @@ public class AuthService {
 
         // DB에서 refresh 조회
         RefreshToken saved = refreshTokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new BusinessException(AuthErrorCode.INVALID_TOKEN));
+                .orElseThrow(() -> new BusinessException(AuthErrorCode.NOT_MATCH_REFRESH_TOKEN));
 
         // 기기 일치 확인
         if (!saved.getDeviceId().equals(deviceId)) {
