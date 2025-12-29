@@ -53,7 +53,7 @@ public class CommentService {
             Pageable pageable
     ) {
         return commentRepository
-                .findByPostIdAndIsQuestion(postId, isQuestion, pageable)
+                .findByPostIdAndQuestion(postId, isQuestion, pageable)
                 .map(comment -> new CommentResponse(
                         comment.getId(),
                         comment.getPostId(),

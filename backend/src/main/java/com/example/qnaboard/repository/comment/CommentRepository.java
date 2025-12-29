@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     //질문/답변에 달린 댓글 목록
-    Page<Comment> findByPostIdAndIsQuestion(
+    Page<Comment> findByPostIdAndQuestion(
             Long postId,
             boolean isQuestion,
             Pageable pageable
