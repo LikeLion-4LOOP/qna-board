@@ -1,6 +1,9 @@
 package com.example.qnaboard.domain.answer;
 
+import com.example.qnaboard.domain.question.Question;
+import com.example.qnaboard.domain.user.User;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -9,37 +12,83 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Answer {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)// 자동증가
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    //private Long questionid; //임시
     // Answer N : 1 Question
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "question_id", nullable = false)
-//    private Question question;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "question_id", nullable = false)
+    private Question question;
 
-
-    private Long userId; // 임시
     // Answer N : 1 User
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "user_id", nullable = false)
-//    private User user;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_pk", nullable = false) // users.id (PK)
+    private User user;
 
-    private int vote;
+    @Column(nullable = false)
+    private int vote = 0;
 
-    private boolean isSelect;
-    private Long questionId; // 임시
+    @Column(nullable = false)
+    private boolean isSelect = false;
 
-
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    // 생성자 / 비즈니스 메서드 추가
+    /* ======================
+       생성 / 수정 시점 자동 처리
+       ====================== */
+
+    @PrePersist
+    private void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    private void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /* ======================
+       생성자
+       ====================== */
+
+    public Answer(String content, Question question, User user) {
+        this.content = content;
+        this.question = question;
+        this.user = user;
+    }
+
+    /* ======================
+       비즈니스 메서드
+       ====================== */
+
+    public void updateContent(String content) {
+        this.content = content;
+    }
+
+    public void select() {
+        this.isSelect = true;
+    }
+
+    public void unselect() {
+        this.isSelect = false;
+    }
+
+    public void upVote() {
+        this.vote++;
+    }
+
+
 }
