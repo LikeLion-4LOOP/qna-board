@@ -117,9 +117,17 @@ public class AuthService {
 
     /**
      * 로그아웃
+     * - refresh 토큰 유효성 확인
+     * - refresh 토큰 조회 후 revoke = true 로 변경
      */
     @Transactional
     public void logout(String refreshToken) {
+        // refresh 유효성 확인
+        if (!jwtProvider.validate(refreshToken) || !"refresh".equals(jwtProvider.getType(refreshToken))) {
+            throw new BusinessException(AuthErrorCode.INVALID_TOKEN);
+        }
+
+        // DB에서 refresh 조회 후 rekove = true로 변경
         refreshTokenRepository.findByToken(refreshToken).orElseThrow(() -> new BusinessException(AuthErrorCode.INVALID_TOKEN)).revoke();
     }
 }
