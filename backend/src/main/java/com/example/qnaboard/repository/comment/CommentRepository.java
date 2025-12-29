@@ -10,7 +10,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     //질문/답변에 달린 댓글 목록
     Page<Comment> findByPostIdAndIsQuestion(
             Long postId,
-            boolean isQuestion,
+            boolean question,
             Pageable pageable
     );
 
