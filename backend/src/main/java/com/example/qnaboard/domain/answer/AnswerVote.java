@@ -35,7 +35,7 @@ public class AnswerVote {
 
     // 누가 추천했는지 (User PK)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_pk", nullable = false)
+    @JoinColumn(name = "user_pk", nullable = false) // user_pk 통일
     private User user;
 
     @Column(nullable = false, updatable = false)
