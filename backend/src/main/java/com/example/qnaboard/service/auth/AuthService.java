@@ -59,7 +59,6 @@ public class AuthService {
                 deviceId,
                 jwtProvider.getExpiry(refresh)
         ));
-
         return new TokenResponse(access, refresh);
     }
 
