@@ -27,7 +27,7 @@ public class QuestionService {
 
     public Question findBoardById(Long id) {
         return questionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다");
+                .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다"));
     }
 
     @Transactional
