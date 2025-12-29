@@ -34,13 +34,13 @@ public class AuthService {
      * - refresh는 DB 저장
      */
     @Transactional
-    public TokenResponse login(String username, String password, String deviceId) {
+    public TokenResponse login(String userId, String password, String deviceId) {
         if (deviceId == null || deviceId.isBlank()) {
             throw new BusinessException(AuthErrorCode.NOT_DEVICE_ID);
         }
 
         // 유저 조회
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
 
         //비밀번호 검증
