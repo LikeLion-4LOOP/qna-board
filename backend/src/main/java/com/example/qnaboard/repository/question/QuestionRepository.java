@@ -1,6 +1,6 @@
 package com.example.qnaboard.repository.question;
 
-import com.example.qnaboard.domain.Question;
+import com.example.qnaboard.domain.question.Question;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 

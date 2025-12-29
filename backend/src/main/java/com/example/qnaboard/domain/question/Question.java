@@ -1,9 +1,7 @@
-package com.example.qnaboard.domain;
+package com.example.qnaboard.domain.question;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -12,8 +10,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class Question {
 
-    private final LocalDateTime createdAt;
-    private final LocalDateTime modifiedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime modifiedAt;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

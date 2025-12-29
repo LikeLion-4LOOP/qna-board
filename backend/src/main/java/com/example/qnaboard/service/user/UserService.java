@@ -1,17 +1,18 @@
 package com.example.qnaboard.service.user;
 
 import com.example.qnaboard.domain.user.User;
+import com.example.qnaboard.dto.user.request.SignupRequest;
 import com.example.qnaboard.dto.user.response.*;
 import com.example.qnaboard.exception.UserErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.user.UserRepository;
-import com.example.qnaboard.service.AnswerService; // 프로젝트에 있는 AnswerService 인터페이스 기준
+import com.example.qnaboard.service.answer.AnswerService; // 프로젝트에 있는 AnswerService 인터페이스 기준
 import com.example.qnaboard.service.comment.CommentService;
-import com.example.qnaboard.dto.comment.response.CommentResponse; // 너가 준 CommentResponse
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,9 +22,34 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     private final AnswerService answerService;
     private final CommentService commentService;
+
+    /**
+     * 회원가입
+     */
+
+    @Transactional
+    public SignupResponse signup(SignupRequest req) {
+        String userid = req.getUserId();
+        String password = req.getPassword();
+        String username = req.getUsername();
+
+
+        if (userRepository.existsByUsername(username)) {
+            throw new BusinessException(UserErrorCode.ID_ALREADY_EXISTS);
+        }
+
+        String encoded = passwordEncoder.encode(password);
+
+        User saved = userRepository.save(new User(userid, encoded ,username));
+
+        return new SignupResponse(saved.getId(), saved.getUserId(),saved.getUsername());
+    }
+
+
 
     /**
      * 내 정보 조회
@@ -106,9 +132,12 @@ public class UserService {
         return Page.empty();
     }
 
+
+
     private UserResponse toUserResponse(User user) {
         return new UserResponse(
                 user.getId(),
+                user.getUserId(),
                 user.getUsername(),
                 user.getPoint(),
                 user.getLevel()
