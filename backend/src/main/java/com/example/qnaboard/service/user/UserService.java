@@ -103,7 +103,7 @@ public class UserService {
      * - Page<Answer> -> Page<MyAnswerSummaryResponse> 변환
      */
     public Page<MyAnswerSummaryResponse> getMyAnswers(Long userId, Pageable pageable) {
-        return answerService.getAnswersByUserId(userId, pageable)
+        return /*answerService.getAnswersByUserId(userId, pageable)
                 .map(answer -> new MyAnswerSummaryResponse(
                         answer.getId(),
                         //answer.question().getId(),
@@ -112,7 +112,7 @@ public class UserService {
                         answer.getVote(),
                         answer.isSelect(),
                         answer.getCreatedAt().toString()
-                ));
+                ))*/ Page.empty();
     }
 
     /**
