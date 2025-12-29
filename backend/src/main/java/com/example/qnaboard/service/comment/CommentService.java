@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class CommentService {
 
-    private static final Long TEMP_USER_ID = 1L;
+    private static final Long TEMP_USER_ID = 1L; // Security 전 임시 사용자
 
     private final CommentRepository commentRepository;
 
@@ -26,7 +26,11 @@ public class CommentService {
 
     /* ================= 댓글 작성 ================= */
 
-    public Long create(Long postId, Boolean isQuestion, CommentCreateRequest request) {
+    public Long createComment(
+            Long postId,
+            Boolean isQuestion,
+            CommentCreateRequest request
+    ) {
         Long loginUserId = getTempLoginUserId();
 
         Comment comment = new Comment(
@@ -39,10 +43,10 @@ public class CommentService {
         return commentRepository.save(comment).getId();
     }
 
-    /* ================= 댓글 목록 조회 ================= */
+    /* ================= 댓글 목록 조회 (post 기준) ================= */
 
     @Transactional(readOnly = true)
-    public Page<CommentResponse> getComments(
+    public Page<CommentResponse> getCommentList(
             Long postId,
             Boolean isQuestion,
             Pageable pageable
@@ -55,13 +59,18 @@ public class CommentService {
                         comment.isQuestion(),
                         comment.getContent(),
                         comment.getCreatedAt(),
-                        new CommentResponse.UserResponse(comment.getUserId())
+                        new CommentResponse.UserResponse(
+                                comment.getUserId()
+                        )
                 ));
     }
 
     /* ================= 댓글 수정 ================= */
 
-    public void update(Long commentId, CommentUpdateRequest request) {
+    public void updateComment(
+            Long commentId,
+            CommentUpdateRequest request
+    ) {
         Long loginUserId = getTempLoginUserId();
 
         Comment comment = commentRepository.findById(commentId)
@@ -75,7 +84,7 @@ public class CommentService {
 
     /* ================= 댓글 삭제 ================= */
 
-    public void delete(Long commentId) {
+    public void deleteComment(Long commentId) {
         Long loginUserId = getTempLoginUserId();
 
         Comment comment = commentRepository.findById(commentId)
@@ -87,8 +96,7 @@ public class CommentService {
         commentRepository.delete(comment);
     }
 
-
-
+    /* ================= 공통 로직 ================= */
 
     private Long getTempLoginUserId() {
         return TEMP_USER_ID;
