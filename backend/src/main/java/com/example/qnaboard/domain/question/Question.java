@@ -24,6 +24,7 @@ public class Question {
 
     private String username;
 
+
     @Builder
     public Question(String title, String content, String username) {
         this.title = title;

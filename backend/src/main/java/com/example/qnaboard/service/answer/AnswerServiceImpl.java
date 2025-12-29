@@ -1,13 +1,21 @@
 package com.example.qnaboard.service.answer;
 
 import com.example.qnaboard.domain.answer.Answer;
+import com.example.qnaboard.domain.answer.AnswerVote;
+import com.example.qnaboard.domain.question.Question;
+import com.example.qnaboard.domain.user.User;
 import com.example.qnaboard.dto.answer.AnswerCreateRequest;
 import com.example.qnaboard.dto.answer.AnswerResponseDto;
 import com.example.qnaboard.dto.answer.AnswerUpdateRequestDto;
 import com.example.qnaboard.exception.AnswerErrorCode;
+import com.example.qnaboard.exception.UserErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.answer.AnswerRepository;
+import com.example.qnaboard.repository.answer.AnswerVoteRepository;
+import com.example.qnaboard.repository.question.QuestionRepository;
+import com.example.qnaboard.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,22 +28,26 @@ import java.time.LocalDateTime;
 public class AnswerServiceImpl implements AnswerService {
 
     private final AnswerRepository answerRepository;
+    private final QuestionRepository questionRepository;
+    private final UserRepository userRepository;
+    private final AnswerVoteRepository answerVoteRepository;
 
     @Override
     public AnswerResponseDto createAnswer(Long questionId, Long userId, AnswerCreateRequest requestDto) {
+        if (userId == null) {
+            throw new BusinessException(AnswerErrorCode.LOGIN_REQUIRED);
+        }
         validateContent(requestDto.getContent());
 
-        Answer answer = new Answer();
-        answer.setContent(requestDto.getContent());
-        answer.setQuestionId(questionId);   // 임시 필드
-        answer.setUserId(userId);           // 임시 필드
-        answer.setVote(0);
-        answer.setSelect(false);
-        answer.setCreatedAt(LocalDateTime.now());
-        answer.setUpdatedAt(LocalDateTime.now());
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new BusinessException(AnswerErrorCode.QUESTION_NOT_FOUND));
 
-        Answer saved = answerRepository.save(answer);
-        return AnswerResponseDto.from(saved);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
+
+        Answer answer = new Answer(requestDto.getContent(), question, user);
+
+        return AnswerResponseDto.from(answerRepository.save(answer));
     }
 
     @Override
@@ -45,11 +57,8 @@ public class AnswerServiceImpl implements AnswerService {
         Answer answer = getAnswerOrThrow(answerId);
         validateOwner(answer, userId);
 
-        answer.setContent(requestDto.getContent());
-        answer.setUpdatedAt(LocalDateTime.now());
-
-        Answer saved = answerRepository.save(answer);
-        return AnswerResponseDto.from(saved);
+        answer.updateContent(requestDto.getContent());
+        return AnswerResponseDto.from(answer);
     }
 
     @Override
@@ -60,50 +69,51 @@ public class AnswerServiceImpl implements AnswerService {
         if (answer.isSelect()) {
             throw new BusinessException(AnswerErrorCode.ANSWER_SELECTED_CANNOT_DELETE);
         }
-
         answerRepository.delete(answer);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<AnswerResponseDto> getAnswersByQuestion(Long questionId, Pageable pageable) {
-        Page<Answer> answerPage =
-                answerRepository.findByQuestionId(questionId, pageable);
-
-        return answerPage.map(AnswerResponseDto::from);
+        return answerRepository
+                .findByQuestion_IdOrderByIsSelectDescCreatedAtDesc(questionId, pageable)
+                .map(AnswerResponseDto::from);
     }
 
     @Override
     public void selectAnswer(Long answerId, Long userId) {
-        Answer target = getAnswerOrThrow(answerId);
-
-        Long questionId = target.getQuestionId();
-        if (questionId == null) {
-            throw new BusinessException(AnswerErrorCode.ANSWER_CANNOT_SELECT_NO_QUESTION);
+        if (userId == null) {
+            throw new BusinessException(AnswerErrorCode.LOGIN_REQUIRED);
         }
 
-        // TODO: Question 엔티티 연동 후 질문 작성자 검증
-        // if (!questionOwnerId.equals(userId)) {
-        //     throw new BusinessException(AnswerErrorCode.ANSWER_FORBIDDEN);
-        // }
+        Answer target = getAnswerOrThrow(answerId);
 
-        answerRepository.findByQuestionIdAndIsSelectTrue(questionId)
+        User actor = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
+
+        String questionOwnerUsername = target.getQuestion().getUsername(); // Question에 있는 필드
+        if (questionOwnerUsername == null || !questionOwnerUsername.equals(actor.getUsername())) {
+            throw new BusinessException(AnswerErrorCode.ANSWER_FORBIDDEN);
+        }
+
+        Long questionId = target.getQuestion().getId();
+
+        answerRepository.findByQuestion_IdAndIsSelectTrue(questionId)
                 .ifPresent(selected -> {
                     if (!selected.getId().equals(answerId)) {
-                        selected.setSelect(false);
-                        selected.setUpdatedAt(LocalDateTime.now());
+                        selected.unselect();
                         answerRepository.save(selected);
                     }
                 });
 
         if (!target.isSelect()) {
-            target.setSelect(true);
-            target.setUpdatedAt(LocalDateTime.now());
+            target.select();
             answerRepository.save(target);
         }
-    }
+    }// 유의점: username이 변경될 수 있으면 나중에 불안정해질 수 있음, 채택 권한검증을 “username 기반으로 임시처리
 
     @Override
+    @Transactional
     public void voteAnswer(Long answerId, Long userId) {
         if (userId == null) {
             throw new BusinessException(AnswerErrorCode.LOGIN_REQUIRED);
@@ -111,22 +121,31 @@ public class AnswerServiceImpl implements AnswerService {
 
         Answer answer = getAnswerOrThrow(answerId);
 
-        // TODO: 중복 추천 방지 (AnswerVoteRepository)
-        answer.setVote(answer.getVote() + 1);
-        answer.setUpdatedAt(LocalDateTime.now());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
 
+        // 중복 추천 방지
+        if (answerVoteRepository.existsByAnswer_IdAndUser_Id(answerId, userId)) {
+            throw new BusinessException(AnswerErrorCode.ALREADY_VOTED);
+        }
+
+        answerVoteRepository.save(new AnswerVote(answer, user));
+
+        // setter 대신 도메인 메서드 사용
+        answer.upVote();
+
+        // 트랜잭션이면 사실 save 없어도 dirty checking으로 반영되지만,
+        // 명확하게 하려면 유지해도 OK
         answerRepository.save(answer);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Page<Answer> getAnswersByUserId(Long userId, Pageable pageable) {
-        return answerRepository.findByUserId(userId, pageable);
+    public Page<AnswerResponseDto> getAnswersByUser(Long userId, Pageable pageable) {
+        return answerRepository.findByUser_Id(userId, pageable)
+                .map(AnswerResponseDto::from);
     }
 
-    /* ======================
-       공통 private 메서드
-       ====================== */
+    /* ===== private ===== */
 
     private void validateContent(String content) {
         if (content == null || content.trim().isEmpty()) {
@@ -136,14 +155,11 @@ public class AnswerServiceImpl implements AnswerService {
 
     private Answer getAnswerOrThrow(Long answerId) {
         return answerRepository.findById(answerId)
-                .orElseThrow(() ->
-                        new BusinessException(AnswerErrorCode.ANSWER_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(AnswerErrorCode.ANSWER_NOT_FOUND));
     }
 
     private void validateOwner(Answer answer, Long userId) {
-        if (answer.getUserId() == null
-                || userId == null
-                || !answer.getUserId().equals(userId)) {
+        if (!answer.getUser().getId().equals(userId)) {
             throw new BusinessException(AnswerErrorCode.ANSWER_FORBIDDEN);
         }
     }

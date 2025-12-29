@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 public class AnswerResponseDto {
     private Long id;
+    private Long questionId;
     private String content;
     private Long userId;
     private int vote;
@@ -25,8 +26,9 @@ public class AnswerResponseDto {
     public static AnswerResponseDto from(Answer answer) {
         return AnswerResponseDto.builder()
                 .id(answer.getId())
+                .questionId(answer.getQuestion().getId())
+                .userId(answer.getUser().getId())
                 .content(answer.getContent())
-                .userId(answer.getUserId())
                 .vote(answer.getVote())
                 .isSelect(answer.isSelect())
                 .createdAt(answer.getCreatedAt())

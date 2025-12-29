@@ -12,19 +12,11 @@ import java.util.List;
 
 public interface AnswerService {
     // 답변 작성
-    AnswerResponseDto createAnswer(
-            Long questionId,
-            Long userId,
-            AnswerCreateRequest requestDto
-    );
+    AnswerResponseDto createAnswer(Long questionId, Long userId, AnswerCreateRequest requestDto);
     /* service레벨에서 책임*/
 
     // 답변 수정
-    AnswerResponseDto updateAnswer(
-            Long answerId,
-            Long userId,
-            AnswerUpdateRequestDto requestDto
-    );
+    AnswerResponseDto updateAnswer(Long answerId, Long userId, AnswerUpdateRequestDto requestDto);
     /* service레벨에서 책임*/
 
     // 답변 삭제
@@ -40,5 +32,5 @@ public interface AnswerService {
     void voteAnswer(Long answerId, Long userId);
 
     // pageable
-    Page<Answer> getAnswersByUserId(Long userId, Pageable pageable);
+    Page<AnswerResponseDto> getAnswersByUser(Long userId, Pageable pageable);
 }

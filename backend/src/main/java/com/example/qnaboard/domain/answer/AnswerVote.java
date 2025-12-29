@@ -15,10 +15,15 @@ import java.time.LocalDateTime;
         name = "answer_vote",
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_answer_vote_answer_user",
-                columnNames = {"answer_id", "user_id"}
-        )
+                columnNames = {"answer_id", "user_pk"}
+        ),
+        indexes = {
+                @Index(name = "idx_answer_vote_answer", columnList = "answer_id"),
+                @Index(name = "idx_answer_vote_user", columnList = "user_pk")
+        }
 )
 public class AnswerVote {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,16 +33,21 @@ public class AnswerVote {
     @JoinColumn(name = "answer_id", nullable = false)
     private Answer answer;
 
-    // 누가 추천했는지
+    // 누가 추천했는지 (User PK)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_pk", nullable = false)
     private User user;
 
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    private void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 
     public AnswerVote(Answer answer, User user) {
         this.answer = answer;
         this.user = user;
-        this.createdAt = LocalDateTime.now();
     }
 }
