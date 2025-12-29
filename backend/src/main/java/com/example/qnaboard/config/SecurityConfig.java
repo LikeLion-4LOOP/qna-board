@@ -6,6 +6,7 @@ import com.example.qnaboard.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -43,6 +44,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**","/users/signup").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/questions/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
