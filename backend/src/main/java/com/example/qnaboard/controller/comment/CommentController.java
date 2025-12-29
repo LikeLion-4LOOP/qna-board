@@ -36,7 +36,7 @@ public class CommentController {
     public Page<CommentResponse> getCommentList(
             @RequestParam Long postId,
             @RequestParam Boolean isQuestion,
-            @PageableDefault(size = 10) Pageable pageable
+            @PageableDefault(size = 10) Pageable pageable //클라이언트가 대량으로 요청하는 것을 방지하기 위해 사이즈 설정
     ) {
         return commentService.getCommentList(postId, isQuestion, pageable);
     }

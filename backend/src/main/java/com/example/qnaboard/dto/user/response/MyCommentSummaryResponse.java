@@ -8,7 +8,7 @@ import lombok.Getter;
 public class MyCommentSummaryResponse {
     private Long id;
     private String content;
-    private String tag;
+    private boolean isQuestion;
     private Long postId;
     private String createdAt;
 }
