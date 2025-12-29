@@ -21,11 +21,12 @@ public class Comment {
     //@ManyToOne(fetch = FetchType.LAZY, optional = false)
     //@JoinColumn(name="user_id")
     //private User user;
+
     @Column(nullable = false)
     private Long userId;
 
-    @Column(nullable=false)
-    private boolean isQuestion;
+    @Column(name = "is_question",nullable=false)
+    private boolean question;
 
     @Column(nullable=false)
     private Long postId;
@@ -36,10 +37,10 @@ public class Comment {
     private LocalDateTime updatedAt;
 
 
-    public Comment(String content, Long userId, boolean isQuestion, Long postId) {
+    public Comment(String content, Long userId, boolean question, Long postId) {
         this.content = content;
         this.userId = userId;
-        this.isQuestion = isQuestion;
+        this.question = question;
         this.postId = postId;
     }
 

@@ -4,6 +4,7 @@ import com.example.qnaboard.domain.comment.Comment;
 import com.example.qnaboard.dto.comment.request.CommentCreateRequest;
 import com.example.qnaboard.dto.comment.request.CommentUpdateRequest;
 import com.example.qnaboard.dto.comment.response.CommentResponse;
+import com.example.qnaboard.dto.user.response.MyCommentSummaryResponse;
 import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.exception.CommentErrorCode;
 import com.example.qnaboard.repository.comment.CommentRepository;
@@ -64,6 +65,23 @@ public class CommentService {
                         )
                 ));
     }
+    /* ================= 댓글 목록 조회 (사용자 id 기준) ================= */
+
+    @Transactional(readOnly = true)
+    public Page<MyCommentSummaryResponse> getMyComments(
+            Long userId,
+            Pageable pageable
+    ) {
+        return commentRepository.findByUserId(userId, pageable)
+                .map(comment -> new MyCommentSummaryResponse(
+                        comment.getId(),
+                        comment.getContent(),
+                        comment.isQuestion(),
+                        comment.getPostId(),
+                        comment.getCreatedAt().toString()
+                ));
+    }
+
 
     /* ================= 댓글 수정 ================= */
 
