@@ -21,7 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +41,7 @@ public class AnswerServiceImpl implements AnswerService {
 
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new BusinessException(AnswerErrorCode.QUESTION_NOT_FOUND));
+        // question errorcode변경예쩡
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
@@ -51,6 +52,7 @@ public class AnswerServiceImpl implements AnswerService {
     }
 
     @Override
+    @Transactional
     public AnswerResponseDto updateAnswer(Long answerId, Long userId, AnswerUpdateRequestDto requestDto) {
         validateContent(requestDto.getContent());
 
@@ -62,6 +64,7 @@ public class AnswerServiceImpl implements AnswerService {
     }
 
     @Override
+    @Transactional
     public void deleteAnswer(Long answerId, Long userId) {
         Answer answer = getAnswerOrThrow(answerId);
         validateOwner(answer, userId);
@@ -81,6 +84,7 @@ public class AnswerServiceImpl implements AnswerService {
     }
 
     @Override
+    @Transactional
     public void selectAnswer(Long answerId, Long userId) {
         if (userId == null) {
             throw new BusinessException(AnswerErrorCode.LOGIN_REQUIRED);
@@ -124,18 +128,18 @@ public class AnswerServiceImpl implements AnswerService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
 
-        // 중복 추천 방지
-        if (answerVoteRepository.existsByAnswer_IdAndUser_Id(answerId, userId)) {
+        try {
+            // 중복 추천 방지 (DB unique 제약이 최종 보루)
+            answerVoteRepository.save(new AnswerVote(answer, user));
+        } catch (DataIntegrityViolationException e) {
+            // (answer_id, user_pk) unique 충돌
             throw new BusinessException(AnswerErrorCode.ALREADY_VOTED);
         }
-
-        answerVoteRepository.save(new AnswerVote(answer, user));
 
         // setter 대신 도메인 메서드 사용
         answer.upVote();
 
-        // 트랜잭션이면 사실 save 없어도 dirty checking으로 반영되지만,
-        // 명확하게 하려면 유지해도 OK
+
         answerRepository.save(answer);
     }
 
@@ -146,7 +150,9 @@ public class AnswerServiceImpl implements AnswerService {
     }
 
     /* ===== private ===== */
-
+    /**
+     *검증
+     */
     private void validateContent(String content) {
         if (content == null || content.trim().isEmpty()) {
             throw new BusinessException(AnswerErrorCode.ANSWER_CONTENT_EMPTY);
