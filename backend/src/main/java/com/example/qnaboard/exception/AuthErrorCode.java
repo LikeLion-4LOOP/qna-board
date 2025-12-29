@@ -29,6 +29,21 @@ public enum AuthErrorCode implements ErrorCode {
             HttpStatus.UNAUTHORIZED,
             "AUTH_401_2",
             "만료된 토큰입니다."
+    ),
+    NOT_DEVICE_ID(
+            HttpStatus.UNAUTHORIZED,
+            "AUTH_401_3",
+            "디바이스 ID가 존재하지 않습니다"
+    ),
+    NOT_MATCH_DEVICE(
+            HttpStatus.UNAUTHORIZED,
+            "AUTH_401_4",
+            "디바이스가 일치하지 않습니다"
+    ),
+    NOT_MATCH_REFRESH_TOKEN(
+            HttpStatus.UNAUTHORIZED,
+            "AUTH_401_5",
+            "존재하지 않는 refreshToken입니다."
     );
 
     private final HttpStatus status;

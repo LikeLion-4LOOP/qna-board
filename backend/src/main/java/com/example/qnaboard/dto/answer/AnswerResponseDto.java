@@ -26,7 +26,7 @@ public class AnswerResponseDto {
         return AnswerResponseDto.builder()
                 .id(answer.getId())
                 .content(answer.getContent())
-                .userId(answer.getUserid())
+                .userId(answer.getUserId())
                 .vote(answer.getVote())
                 .isSelect(answer.isSelect())
                 .createdAt(answer.getCreatedAt())
