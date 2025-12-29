@@ -1,5 +1,6 @@
 package com.example.qnaboard.domain.comment;
 
+import com.example.qnaboard.domain.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -18,12 +19,10 @@ public class Comment {
     @Column(nullable = false, length=1000)
     private String content;
 
-    //@ManyToOne(fetch = FetchType.LAZY, optional = false)
-    //@JoinColumn(name="user_id")
-    //private User user;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name="user_id",nullable = false)
+    private User user;
 
-    @Column(nullable = false)
-    private Long userId;
 
     @Column(name = "is_question",nullable=false)
     private boolean question;
@@ -37,9 +36,9 @@ public class Comment {
     private LocalDateTime updatedAt;
 
 
-    public Comment(String content, Long userId, boolean question, Long postId) {
+    public Comment(String content, User user, boolean question, Long postId) {
         this.content = content;
-        this.userId = userId;
+        this.user = user;
         this.question = question;
         this.postId = postId;
     }

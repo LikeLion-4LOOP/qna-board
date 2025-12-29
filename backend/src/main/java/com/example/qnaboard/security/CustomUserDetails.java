@@ -1,7 +1,6 @@
 package com.example.qnaboard.security;
 
 import com.example.qnaboard.domain.user.User;
-import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
