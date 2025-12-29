@@ -10,8 +10,12 @@ import java.util.Optional;
 
 public interface AnswerRepository extends JpaRepository<Answer, Long> {
     // userId 기반 페이징 조회
-    Page<Answer> findByUserId(Long userId, Pageable pageable);
-    Page<Answer> findByQuestionId(Long questionId, Pageable pageable);
-    //id중복확인
-    Optional<Answer> findByQuestionIdAndIsSelectTrue(Long questionId);
+    // 채택 답변 우선 + 최신순
+    Page<Answer> findByQuestion_IdOrderByIsSelectDescCreatedAtDesc(
+            Long questionId, Pageable pageable
+    );
+
+    Optional<Answer> findByQuestion_IdAndIsSelectTrue(Long questionId);
+
+    Page<Answer> findByUser_Id(Long userId, Pageable pageable);
 }

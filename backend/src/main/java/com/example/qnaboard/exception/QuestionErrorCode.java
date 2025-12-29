@@ -1,4 +1,12 @@
 package com.example.qnaboard.exception;
+import com.example.qnaboard.exception.common.ErrorCode;
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
+public enum QuestionErrorCode  {
+    QUESTION_NOT_FOUND(404, "질문을 찾을 수 없습니다."),
+    UNAUTHORIZED_USER(403, "작성자만 수정/삭제할 수 있습니다."),
+    INVALID_INPUT(400, "잘못된 입력입니다.");
 
 import com.example.qnaboard.exception.common.ErrorCode;
 import lombok.Getter;
