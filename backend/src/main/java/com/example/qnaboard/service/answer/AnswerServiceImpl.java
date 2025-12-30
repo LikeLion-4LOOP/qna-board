@@ -39,7 +39,7 @@ public class AnswerServiceImpl implements AnswerService {
         }
         validateContent(requestDto.getContent());
 
-        Question question = questionRepository.findById(questionId)
+        Question question =   questionRepository.findById(questionId)
                 .orElseThrow(() -> new BusinessException(AnswerErrorCode.QUESTION_NOT_FOUND));
         // question errorcode변경예쩡
 
