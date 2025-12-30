@@ -21,6 +21,7 @@ jobs:
           cache: gradle
 
       - name: Build (Gradle)
+        working-directory: backend
         run: ./gradlew clean build -x test
 
       - name: Prepare SSH
@@ -32,7 +33,7 @@ jobs:
 
       - name: Upload jar to EC2
         run: |
-          JAR_PATH=$(ls build/libs/*.jar | head -n 1)
+          JAR_PATH=$(ls backend/build/libs/*.jar | grep -v plain | head -n 1)
           echo "Uploading: $JAR_PATH"
           scp -i ~/.ssh/ec2.key "$JAR_PATH" "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ec2-user/app/app.jar"
 
