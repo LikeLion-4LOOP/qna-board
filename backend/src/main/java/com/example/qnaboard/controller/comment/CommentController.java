@@ -3,10 +3,12 @@ package com.example.qnaboard.controller.comment;
 import com.example.qnaboard.dto.comment.request.CommentCreateRequest;
 import com.example.qnaboard.dto.comment.request.CommentUpdateRequest;
 import com.example.qnaboard.dto.comment.response.CommentResponse;
+import com.example.qnaboard.security.CustomUserDetails;
 import com.example.qnaboard.service.comment.CommentService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,11 +25,17 @@ public class CommentController {
 
     @PostMapping
     public Long createComment(
+            @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam Long postId,
             @RequestParam Boolean isQuestion,
             @RequestBody CommentCreateRequest request
     ) {
-        return commentService.createComment(postId, isQuestion, request);
+        return commentService.createComment(
+                user.getUserId(),
+                postId,
+                isQuestion,
+                request
+        );
     }
 
     /* ================= 댓글 목록 조회 ================= */
@@ -36,7 +44,7 @@ public class CommentController {
     public Page<CommentResponse> getCommentList(
             @RequestParam Long postId,
             @RequestParam Boolean isQuestion,
-            @PageableDefault(size = 10) Pageable pageable //클라이언트가 대량으로 요청하는 것을 방지하기 위해 사이즈 설정
+            @PageableDefault(size = 10) Pageable pageable
     ) {
         return commentService.getCommentList(postId, isQuestion, pageable);
     }
@@ -45,18 +53,27 @@ public class CommentController {
 
     @PatchMapping("/{commentId}")
     public void updateComment(
+            @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable Long commentId,
             @RequestBody CommentUpdateRequest request
     ) {
-        commentService.updateComment(commentId, request);
+        commentService.updateComment(
+                user.getUserId(),
+                commentId,
+                request
+        );
     }
 
     /* ================= 댓글 삭제 ================= */
 
     @DeleteMapping("/{commentId}")
     public void deleteComment(
+            @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable Long commentId
     ) {
-        commentService.deleteComment(commentId);
+        commentService.deleteComment(
+                user.getUserId(),
+                commentId
+        );
     }
 }
