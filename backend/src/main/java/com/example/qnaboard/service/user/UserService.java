@@ -7,8 +7,10 @@ import com.example.qnaboard.exception.UserErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.user.UserRepository;
 import com.example.qnaboard.service.answer.AnswerService; // 프로젝트에 있는 AnswerService 인터페이스 기준
+import com.example.qnaboard.service.answer.AnswerServiceImpl;
 import com.example.qnaboard.service.comment.CommentService;
 
+import com.example.qnaboard.service.quesiton.QuestionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,9 +25,9 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    private final AnswerService answerService;
+    private final AnswerServiceImpl answerService;
     private final CommentService commentService;
+    private final QuestionService questionService;
 
     /**
      * 회원가입
@@ -100,36 +102,33 @@ public class UserService {
     /**
      * 내가 작성한 답변 목록
      * - AnswerServiceImpl.getAnswersByUserId(userId, pageable) 사용
-     * - Page<Answer> -> Page<MyAnswerSummaryResponse> 변환
+     * - Page<AnswerResponseDto> -> Page<MyAnswerSummaryResponse> 변환
      */
     public Page<MyAnswerSummaryResponse> getMyAnswers(Long userId, Pageable pageable) {
-        return /*answerService.getAnswersByUserId(userId, pageable)
+        return answerService.getAnswersByUser(userId, pageable)
                 .map(answer -> new MyAnswerSummaryResponse(
                         answer.getId(),
-                        //answer.question().getId(),
-                        1L, //임시값
+                        answer.getQuestionId(),
                         summarize(answer.getContent(), 30),
                         answer.getVote(),
                         answer.isSelect(),
                         answer.getCreatedAt().toString()
-                ))*/ Page.empty();
+                ));
     }
 
     /**
      * 내가 작성한 댓글 목록
      * - CommentService.getMyComments(userId, pageable) 사용
-     * - getMyComments 현재 미구현. 구현 완료시 코드 미리 작성
      */
     public Page<MyCommentSummaryResponse> getMyComments(Long userId, Pageable pageable) {
-        /*return commentService.getMyComments(userId, pageable)
+        return commentService.getMyComments(userId, pageable)
                 .map(comment -> new MyCommentSummaryResponse(
                         comment.getId(),
-                        comment.getContent(),
-                        comment.getTag(),
+                        summarize(comment.getContent(),30),
+                        comment.isQuestion(),
                         comment.getPostId(),
                         comment.getCreatedAt()
-        ))*/
-        return Page.empty();
+        ));
     }
 
 
