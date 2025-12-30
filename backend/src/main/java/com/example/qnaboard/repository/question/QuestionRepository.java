@@ -12,16 +12,16 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
             Pageable pageable
     );
 
-    // 제목내 키워드 포함된 질문 검색
-    Page<Question> findByTitleContaining(
-            String keyword,
-            Pageable pageable
-    );
-
-    // 특정 유저가 작성한 글 중 제목으로 검색
-    Page<Question> findByUser_IdAndTitleContaining(
-            Long userId,
-            String keyword,
-            Pageable pageable
-    );
+//    // 제목내 키워드 포함된 질문 검색 - 추가적인 기능
+//    Page<Question> findByTitleContaining(
+//            String keyword,
+//            Pageable pageable
+//    );
+//
+//    // 특정 유저가 작성한 글 중 제목으로 검색
+//    Page<Question> findByUser_IdAndTitleContaining(
+//            Long userId,
+//            String keyword,
+//            Pageable pageable
+//    );
 }
