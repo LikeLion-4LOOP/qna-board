@@ -1,5 +1,0 @@
-spring:
-  application:
-    name=qna-board
-  profiles:
-    active: dev
