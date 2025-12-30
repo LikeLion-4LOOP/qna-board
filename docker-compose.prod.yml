@@ -1,0 +1,34 @@
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: qna_dev
+      MYSQL_USER: qna
+      MYSQL_PASSWORD: qna123
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: qna-backend
+    depends_on:
+      - mysql
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: qna_prod
+      DB_USER: qna
+      DB_PASSWORD: qna123
+    ports:
+      - "8080:8080"
+    restart : unless-stopped
+
+volumes:
+  mysql_data:
