@@ -23,7 +23,6 @@ jobs:
             git reset --hard origin/dev
 
             # 빌드+실행
-            docker compose up -d --build
+            docker compose -f docker-compose.prod.yml up -d --build
 
-            # 상태 확인
-            docker compose ps
+            
