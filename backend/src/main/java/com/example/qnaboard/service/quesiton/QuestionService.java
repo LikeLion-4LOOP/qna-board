@@ -1,4 +1,4 @@
-package com.example.qnaboard.service.question;
+package com.example.qnaboard.service.quesiton;
 
 import com.example.qnaboard.domain.question.Question;
 import com.example.qnaboard.domain.user.User;
@@ -112,8 +112,6 @@ public class QuestionService {
                 .map(question -> new MyQuestionSummaryResponse(
                         question.getId(),
                         question.getTitle(),
-                        question.getViewCount(),
-                        0,
                         question.getCreatedAt().toString()
                 ));
     }

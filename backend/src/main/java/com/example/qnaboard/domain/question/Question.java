@@ -1,3 +1,5 @@
+package com.example.qnaboard.domain.question;
+
 import com.example.qnaboard.domain.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
