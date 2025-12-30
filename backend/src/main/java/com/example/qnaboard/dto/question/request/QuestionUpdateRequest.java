@@ -2,7 +2,7 @@ package com.example.qnaboard.dto.question.request;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record QuestionUpdateRequest(
+public record QuestionUpdateRequest(    // 질문 수정
         @NotBlank(message = "제목은 비어있을 수 없습니다.")
         String title,
 
