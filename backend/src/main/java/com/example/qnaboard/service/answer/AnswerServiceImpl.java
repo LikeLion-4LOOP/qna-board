@@ -41,7 +41,7 @@ public class AnswerServiceImpl implements AnswerService {
 
         Question question =   questionRepository.findById(questionId)
                 .orElseThrow(() -> new BusinessException(AnswerErrorCode.QUESTION_NOT_FOUND));
-        // question errorcode변경예쩡
+        // question errorcode 변경예정
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
@@ -54,6 +54,7 @@ public class AnswerServiceImpl implements AnswerService {
     @Override
     @Transactional
     public AnswerResponseDto updateAnswer(Long answerId, Long userId, AnswerUpdateRequestDto requestDto) {
+        requireLogin(userId);
         validateContent(requestDto.getContent());
 
         Answer answer = getAnswerOrThrow(answerId);
@@ -66,6 +67,7 @@ public class AnswerServiceImpl implements AnswerService {
     @Override
     @Transactional
     public void deleteAnswer(Long answerId, Long userId) {
+        requireLogin(userId);
         Answer answer = getAnswerOrThrow(answerId);
         validateOwner(answer, userId);
 
@@ -92,11 +94,8 @@ public class AnswerServiceImpl implements AnswerService {
 
         Answer target = getAnswerOrThrow(answerId);
 
-        User actor = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
-
-        String questionOwnerUsername = target.getQuestion().getUsername(); // Question에 있는 필드
-        if (questionOwnerUsername == null || !questionOwnerUsername.equals(actor.getUsername())) {
+        Long ownerId = target.getQuestion().getUser().getId();
+        if (!ownerId.equals(userId)) {
             throw new BusinessException(AnswerErrorCode.ANSWER_FORBIDDEN);
         }
 
@@ -106,15 +105,13 @@ public class AnswerServiceImpl implements AnswerService {
                 .ifPresent(selected -> {
                     if (!selected.getId().equals(answerId)) {
                         selected.unselect();
-                        answerRepository.save(selected);
                     }
                 });
 
         if (!target.isSelect()) {
             target.select();
-            answerRepository.save(target);
         }
-    }// 유의점: username이 변경될 수 있으면 나중에 불안정해질 수 있음, 채택 권한검증을 “username 기반으로 임시처리
+    }
 
     @Override
     @Transactional
@@ -168,5 +165,8 @@ public class AnswerServiceImpl implements AnswerService {
         if (!answer.getUser().getId().equals(userId)) {
             throw new BusinessException(AnswerErrorCode.ANSWER_FORBIDDEN);
         }
+    }
+    private void requireLogin(Long userId) {
+        if (userId == null) throw new BusinessException(AnswerErrorCode.LOGIN_REQUIRED);
     }
 }
