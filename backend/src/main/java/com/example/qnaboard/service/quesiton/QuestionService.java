@@ -16,7 +16,7 @@ public class QuestionService {
 
     private final QuestionRepository questionRepository;
 
-    @Transactional
+    @Transactional(readOnly = true)
     public void registerBoard(Question board) {
         questionRepository.save(board);
     }
