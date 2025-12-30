@@ -8,7 +8,5 @@ import lombok.Getter;
 public class MyQuestionSummaryResponse {
     private Long id;
     private String title;
-    private String tag;
     private String createdAt;
-    private boolean isSolved;
 }
