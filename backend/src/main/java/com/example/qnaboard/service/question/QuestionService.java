@@ -141,6 +141,7 @@ public class QuestionService {
                         question.getCategory().getDisplayName()
                 ),
                 question.getCreatedAt(),
+                question.getUpdatedAt(),
                 new QuestionResponse.UserResponse(
                         question.getUser().getId(),
                         question.getUser().getUsername()
@@ -177,6 +178,7 @@ public class QuestionService {
                 question.getViewCount(),
                 new QuestionResponse.CategoryResponse(question.getCategory().name(),question.getCategory().getDisplayName()),
                 question.getCreatedAt(),
+                question.getUpdatedAt(),
                 new QuestionResponse.UserResponse(
                         question.getUser().getId(),
                         question.getUser().getUsername()

@@ -9,6 +9,7 @@ public record QuestionResponse(
         int viewCount,
         CategoryResponse category,
         LocalDateTime createdAt,
+        LocalDateTime updatedAt,
         UserResponse user
 ) {
     public record UserResponse(Long id, String username) {}

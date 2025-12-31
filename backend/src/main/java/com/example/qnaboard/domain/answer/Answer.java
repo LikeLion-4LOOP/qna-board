@@ -100,4 +100,9 @@ public class Answer {
     public void increaseViewCount() {
         this.viewCount++;
     }
+    public void downVote() {
+        if (this.vote > 0) {
+            this.vote--;
+        }
+    }
 }
