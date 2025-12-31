@@ -2,12 +2,14 @@ package com.example.qnaboard.controller.comment;
 
 import com.example.qnaboard.dto.comment.request.CommentCreateRequest;
 import com.example.qnaboard.dto.comment.request.CommentUpdateRequest;
+import com.example.qnaboard.dto.comment.response.CommentCreateResponse;
 import com.example.qnaboard.dto.comment.response.CommentResponse;
 import com.example.qnaboard.security.CustomUserDetails;
 import com.example.qnaboard.service.comment.CommentService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +26,7 @@ public class CommentController {
     /* ================= 댓글 작성 ================= */
 
     @PostMapping
-    public Long createComment(
+    public CommentCreateResponse createComment(
             @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam Long postId,
             @RequestParam Boolean isQuestion,
@@ -67,6 +69,7 @@ public class CommentController {
     /* ================= 댓글 삭제 ================= */
 
     @DeleteMapping("/{commentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteComment(
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable Long commentId

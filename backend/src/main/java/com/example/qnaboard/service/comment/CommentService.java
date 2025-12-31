@@ -4,6 +4,7 @@ import com.example.qnaboard.domain.comment.Comment;
 import com.example.qnaboard.domain.user.User;
 import com.example.qnaboard.dto.comment.request.CommentCreateRequest;
 import com.example.qnaboard.dto.comment.request.CommentUpdateRequest;
+import com.example.qnaboard.dto.comment.response.CommentCreateResponse;
 import com.example.qnaboard.dto.comment.response.CommentResponse;
 import com.example.qnaboard.dto.user.response.MyCommentSummaryResponse;
 import com.example.qnaboard.exception.CommentErrorCode;
@@ -27,7 +28,7 @@ public class CommentService {
 
     /* ================= 댓글 작성 ================= */
 
-    public Long createComment(
+    public CommentCreateResponse createComment(
             Long userId,
             Long postId,
             Boolean isQuestion,
@@ -42,9 +43,16 @@ public class CommentService {
                 isQuestion,
                 postId
         );
-
-
-        return commentRepository.save(comment).getId();
+        Comment save = commentRepository.save(comment);
+        CommentCreateResponse commentCreateResponse = new CommentCreateResponse(
+                save.getId(),
+                save.getPostId(),
+                save.isQuestion(),
+                save.getContent(),
+                save.getCreatedAt(),
+                new CommentCreateResponse.UserResponse(save.getUser().getId())
+        );
+        return commentCreateResponse;
     }
 
     /* ================= 댓글 목록 조회 (post 기준) ================= */
