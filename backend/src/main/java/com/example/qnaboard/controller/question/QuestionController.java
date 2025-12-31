@@ -25,12 +25,14 @@ public class QuestionController {
 
     // 1. 등록
     @PostMapping
-    public ResponseEntity<Long> register(
+    public ResponseEntity<QuestionResponse> register(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody QuestionCreateRequest request
     ) {
-        Long id = questionService.createQuestion(userDetails.getUserId(), request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(id);
+        QuestionResponse response =
+                questionService.createQuestion(userDetails.getUserId(), request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     // 2. 전체 목록 조회

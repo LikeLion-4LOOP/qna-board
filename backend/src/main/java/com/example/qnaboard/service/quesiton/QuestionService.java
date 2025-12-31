@@ -26,7 +26,7 @@ public class QuestionService {
     private final UserRepository userRepository;
 
     // 질문 등록
-    public Long createQuestion(
+    public QuestionResponse createQuestion(
             Long userId,
             QuestionCreateRequest request
     ) {
@@ -40,8 +40,18 @@ public class QuestionService {
                 .content(request.content())
                 .user(user)
                 .build();
+        Question saved = questionRepository.save(question);
 
-        return questionRepository.save(question).getId();
+        return new QuestionResponse(
+                saved.getId(),
+                saved.getTitle(),
+                saved.getContent(),
+                saved.getCreatedAt(),
+                new QuestionResponse.UserResponse(
+                        user.getId(),
+                        user.getUsername()
+                )
+        );
     }
 
     // 질문 전체 목록 조회
