@@ -79,7 +79,7 @@ public class QuestionController {
     }
 
     // 사용자의 요청에 따라 정렬시킴 (최신/인기/답변많은수)
-    @GetMapping
+    @GetMapping("/keyword")
     public Page<QuestionResponse> getList(
             @RequestParam(required = false) String keyword,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
