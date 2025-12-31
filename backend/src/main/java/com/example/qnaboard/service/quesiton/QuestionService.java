@@ -11,6 +11,7 @@ import com.example.qnaboard.exception.UserErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.question.QuestionRepository;
 import com.example.qnaboard.repository.user.UserRepository;
+import com.example.qnaboard.service.user.UserPointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,7 @@ public class QuestionService {
 
     private final QuestionRepository questionRepository;
     private final UserRepository userRepository;
+    private final UserPointService userPointService;
 
     // 질문 등록
     public QuestionResponse createQuestion(
@@ -40,6 +42,7 @@ public class QuestionService {
                 .content(request.content())
                 .user(user)
                 .build();
+        userPointService.rewardForPostQuestion(userId);
         Question saved = questionRepository.save(question);
 
         return new QuestionResponse(

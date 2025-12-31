@@ -60,4 +60,8 @@ public class User {
     public void updateUsername(String username) {
         this.username = username;
     }
+    public void addPoint(int num){
+        this.point+=num;
+        this.level = Level.fromPoint(this.point);
+    }
 }
