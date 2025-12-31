@@ -1,10 +1,13 @@
 package com.example.qnaboard.service.user;
 
+import com.example.qnaboard.domain.auth.RefreshToken;
 import com.example.qnaboard.domain.user.User;
 import com.example.qnaboard.dto.user.request.SignupRequest;
+import com.example.qnaboard.dto.user.request.UserChangePassword;
 import com.example.qnaboard.dto.user.response.*;
 import com.example.qnaboard.exception.UserErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
+import com.example.qnaboard.repository.auth.RefreshTokenRepository;
 import com.example.qnaboard.repository.user.UserRepository;
 import com.example.qnaboard.service.answer.AnswerService; // 프로젝트에 있는 AnswerService 인터페이스 기준
 import com.example.qnaboard.service.answer.AnswerServiceImpl;
@@ -18,12 +21,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @Service
 @Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AnswerServiceImpl answerService;
     private final CommentService commentService;
@@ -49,6 +55,31 @@ public class UserService {
         User saved = userRepository.save(new User(userid, encoded ,username));
 
         return new SignupResponse(saved.getId(), saved.getUserId(),saved.getUsername());
+    }
+
+    @Transactional
+    public void deleteUser(Long userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
+        userRepository.delete(user);
+    }
+
+    @Transactional
+    public void changePassword(Long userId, UserChangePassword request){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
+        if (!passwordEncoder.matches(request.getCurrentPw(), user.getPassword())) {
+            throw new BusinessException(UserErrorCode.WRONG_PASSWORD);
+        }
+
+        validateNewPassword(request.getChangePw());
+
+        user.changePassword(passwordEncoder.encode(request.getChangePw()));
+
+        //refreshToken 무효화
+        List<RefreshToken> tokens = refreshTokenRepository.findAllByUser_IdAndRevokedFalse(userId);
+        tokens.forEach(RefreshToken::revoke);
+
     }
 
 
@@ -144,5 +175,11 @@ public class UserService {
         if (text == null) return "";
         if (text.length() <= maxLen) return text;
         return text.substring(0, maxLen);
+    }
+
+    private void validateNewPassword(String newPassword) {
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new BusinessException(UserErrorCode.PASSWORD_POLICY_VIOLATION);
+        }
     }
 }

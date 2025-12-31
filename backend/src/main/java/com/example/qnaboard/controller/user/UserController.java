@@ -2,6 +2,7 @@ package com.example.qnaboard.controller.user;
 
 import com.example.qnaboard.dto.user.request.SignupRequest;
 import com.example.qnaboard.dto.user.request.UpdateUsernameRequest;
+import com.example.qnaboard.dto.user.request.UserChangePassword;
 import com.example.qnaboard.dto.user.response.*;
 import com.example.qnaboard.security.CustomUserDetails;
 import com.example.qnaboard.service.user.UserService;
@@ -9,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,6 +37,19 @@ public class UserController {
         return userService.signup(req);
     }
 
+    @DeleteMapping("/delete")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@AuthenticationPrincipal CustomUserDetails customUserDetails){
+        userService.deleteUser(customUserDetails.getUserId());
+    }
+
+    @PatchMapping("/change-password")
+    public void changePassword(@AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @Valid @RequestBody UserChangePassword userChangePassword){
+        userService.changePassword(customUserDetails.getUserId(),userChangePassword);
+
+
+    }
     // 내 정보 수정 (username)
     @PatchMapping("")
     public UserResponse updateUsername(
