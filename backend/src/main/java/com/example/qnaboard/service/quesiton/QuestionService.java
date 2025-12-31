@@ -79,7 +79,7 @@ public class QuestionService {
     }
 
     // 질문 수정
-    public void updateQuestion(
+    public QuestionResponse updateQuestion(
             Long userId,
             Long questionId,
             QuestionUpdateRequest request
@@ -90,6 +90,18 @@ public class QuestionService {
         // 본인 소유 확인
         validateOwner(question, userId);
         question.update(request.title(), request.content());
+
+        return new QuestionResponse(
+                question.getId(),
+                question.getTitle(),
+                question.getContent(),
+                question.getCreatedAt(),
+                new QuestionResponse.UserResponse(
+                        question.getUser().getId(),
+                        question.getUser().getUsername()
+                )
+        );
+
     }
 
     // 질문 삭제
