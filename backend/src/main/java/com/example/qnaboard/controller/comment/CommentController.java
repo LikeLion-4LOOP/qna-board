@@ -4,6 +4,7 @@ import com.example.qnaboard.dto.comment.request.CommentCreateRequest;
 import com.example.qnaboard.dto.comment.request.CommentUpdateRequest;
 import com.example.qnaboard.dto.comment.response.CommentCreateResponse;
 import com.example.qnaboard.dto.comment.response.CommentResponse;
+import com.example.qnaboard.dto.comment.response.CommentUpdateResponse;
 import com.example.qnaboard.security.CustomUserDetails;
 import com.example.qnaboard.service.comment.CommentService;
 import org.springframework.data.domain.Page;
@@ -54,16 +55,17 @@ public class CommentController {
     /* ================= 댓글 수정 ================= */
 
     @PatchMapping("/{commentId}")
-    public void updateComment(
+    public CommentUpdateResponse updateComment(
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable Long commentId,
             @RequestBody CommentUpdateRequest request
     ) {
-        commentService.updateComment(
+        CommentUpdateResponse response = commentService.updateComment(
                 user.getUserId(),
                 commentId,
                 request
         );
+        return response;
     }
 
     /* ================= 댓글 삭제 ================= */
