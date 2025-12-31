@@ -64,4 +64,7 @@ public class User {
         this.point+=num;
         this.level = Level.fromPoint(this.point);
     }
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
 }

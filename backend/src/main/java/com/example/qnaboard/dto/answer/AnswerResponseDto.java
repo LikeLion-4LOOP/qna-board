@@ -19,8 +19,10 @@ public class AnswerResponseDto {
     private Long userId;
     private int vote;
     private boolean isSelect;
+    private int viewCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
 
     // Entity → DTO 변환 메서드 추가
     public static AnswerResponseDto from(Answer answer) {
@@ -29,6 +31,7 @@ public class AnswerResponseDto {
                 .questionId(answer.getQuestion().getId())
                 .userId(answer.getUser().getId())
                 .content(answer.getContent())
+                .viewCount(answer.getViewCount())
                 .vote(answer.getVote())
                 .isSelect(answer.isSelect())
                 .createdAt(answer.getCreatedAt())

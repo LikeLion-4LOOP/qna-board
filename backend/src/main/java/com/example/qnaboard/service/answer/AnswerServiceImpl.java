@@ -157,6 +157,17 @@ public class AnswerServiceImpl implements AnswerService {
         return answerRepository.findByUser_Id(userId, pageable)
                 .map(AnswerResponseDto::from);
     }
+    @Override
+    @Transactional
+    public AnswerResponseDto getAnswerDetail(Long answerId) {
+        Answer answer = getAnswerOrThrow(answerId);
+
+        // 조회수 증가
+        answer.increaseViewCount();
+
+        return AnswerResponseDto.from(answer);
+    }
+
 
     /* ===== private ===== */
     /**

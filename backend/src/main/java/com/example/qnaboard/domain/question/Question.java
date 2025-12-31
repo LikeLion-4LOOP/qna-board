@@ -6,6 +6,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 
@@ -13,6 +15,10 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Question {
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private QuestionCategory category;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,6 +42,7 @@ public class Question {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     @Column(nullable = false)
@@ -43,10 +50,11 @@ public class Question {
     private LocalDateTime updatedAt;
 
     @Builder
-    public Question(String title, String content, User user) {
+    public Question(String title, String content, User user, QuestionCategory category) {
         this.title = title;
         this.content = content;
         this.user = user;
+        this.category = category;
         this.viewCount = 0;
     }
 
@@ -54,9 +62,10 @@ public class Question {
         this.viewCount++;
     }
 
-    public void update(String title, String content) {
+    public void update(String title, String content,QuestionCategory category) {
         this.title = title;
         this.content = content;
+        this.category = category;
     }
 
     @PrePersist
@@ -67,5 +76,8 @@ public class Question {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+    public void increaseViewCount() {
+        this.viewCount++;
     }
 }

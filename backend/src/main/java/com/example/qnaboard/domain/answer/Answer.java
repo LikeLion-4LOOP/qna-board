@@ -7,6 +7,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 
@@ -14,6 +16,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Answer {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,6 +33,7 @@ public class Answer {
     // Answer N : 1 User
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_pk", nullable = false) // users.id (PK)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     @Column(nullable = false)
@@ -43,6 +47,9 @@ public class Answer {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(nullable = false)
+    private int viewCount = 0;
 
     /* ======================
        생성 / 수정 시점 자동 처리
@@ -90,5 +97,7 @@ public class Answer {
         this.vote++;
     }
 
-
+    public void increaseViewCount() {
+        this.viewCount++;
+    }
 }
