@@ -96,4 +96,8 @@ public class AnswerController {
     ) {
         answerService.voteAnswer(answerId, userDetails.getUserId());
     }
+    @GetMapping("/answers/{answerId}")
+    public AnswerResponseDto getAnswerDetail(@PathVariable Long answerId) {
+        return answerService.getAnswerDetail(answerId);
+    }
 }

@@ -11,6 +11,7 @@ import com.example.qnaboard.exception.UserErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.question.QuestionRepository;
 import com.example.qnaboard.repository.user.UserRepository;
+import com.example.qnaboard.service.user.UserPointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,25 +22,36 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional
 public class QuestionService {
-    private final QuestionRepository questionRepository; // ✅ 추가
+
+    private final QuestionRepository questionRepository;
     private final UserRepository userRepository;
+    private final UserPointService userPointService;
 
     /**
-     * 1️⃣ 질문 등록
+     * 1️⃣ 질문 등록 (카테고리 + 포인트 지급)
      */
-    public Long createQuestion(Long userId, QuestionCreateRequest request) {
-
+    public QuestionResponse createQuestion(
+            Long userId,
+            QuestionCreateRequest request
+    ) {
+        // 작성자 유저 확인
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
 
+        // 질문 생성 (카테고리 포함)
         Question question = Question.builder()
                 .title(request.title())
                 .content(request.content())
-                .category(request.category())   // ✅ 카테고리
+                .category(request.category())   // ✅ 카테고리 저장
                 .user(user)
                 .build();
 
-        return questionRepository.save(question).getId();
+        // 포인트 지급
+        userPointService.rewardForPostQuestion(userId);
+
+        Question saved = questionRepository.save(question);
+
+        return toResponse(saved);
     }
 
     /**
@@ -47,55 +59,29 @@ public class QuestionService {
      */
     @Transactional(readOnly = true)
     public Page<QuestionResponse> getQuestionList(Pageable pageable) {
-
         return questionRepository.findAll(pageable)
-                .map(question -> new QuestionResponse(
-                        question.getId(),
-                        question.getTitle(),
-                        question.getContent(),
-                        new QuestionResponse.CategoryResponse(
-                                question.getCategory().name(),
-                                question.getCategory().getDisplayName()
-                        ),
-                        question.getCreatedAt(),
-                        new QuestionResponse.UserResponse(
-                                question.getUser().getId(),
-                                question.getUser().getUsername()
-                        )
-                ));
+                .map(this::toResponse);
     }
 
     /**
-     * 3️⃣ 질문 상세 조회 (+ 조회수 증가)
+     * 3️. 질문 상세 조회 (+ 조회수 증가)
      */
+    @Transactional
     public QuestionResponse getQuestionDetail(Long questionId) {
 
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new BusinessException(QuestionErrorCode.QUESTION_NOT_FOUND));
 
-        // ✅ 조회수 증가
+        //조회수 증가
         question.addViewCount();
 
-        return new QuestionResponse(
-                question.getId(),
-                question.getTitle(),
-                question.getContent(),
-                new QuestionResponse.CategoryResponse(
-                        question.getCategory().name(),
-                        question.getCategory().getDisplayName()
-                ),
-                question.getCreatedAt(),
-                new QuestionResponse.UserResponse(
-                        question.getUser().getId(),
-                        question.getUser().getUsername()
-                )
-        );
+        return toResponse(question);
     }
 
     /**
      * 4️⃣ 질문 수정 (카테고리 변경 가능)
      */
-    public void updateQuestion(
+    public QuestionResponse updateQuestion(
             Long userId,
             Long questionId,
             QuestionUpdateRequest request
@@ -110,18 +96,21 @@ public class QuestionService {
                 request.content(),
                 request.category()   // ✅ 카테고리 수정
         );
+
+        return toResponse(question);
     }
 
     /**
      * 5️⃣ 질문 삭제
      */
-    public void deleteQuestion(Long userId, Long questionId) {
-
+    public void deleteQuestion(
+            Long userId,
+            Long questionId
+    ) {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new BusinessException(QuestionErrorCode.QUESTION_NOT_FOUND));
 
         validateOwner(question, userId);
-
         questionRepository.delete(question);
     }
 
@@ -130,13 +119,33 @@ public class QuestionService {
      */
     @Transactional(readOnly = true)
     public Page<MyQuestionSummaryResponse> getMyQuestions(Long userId, Pageable pageable) {
-
         return questionRepository.findByUser_Id(userId, pageable)
                 .map(question -> new MyQuestionSummaryResponse(
                         question.getId(),
                         question.getTitle(),
                         question.getCreatedAt().toString()
                 ));
+    }
+
+    /**
+     *  Question → QuestionResponse 공통 변환
+     */
+    private QuestionResponse toResponse(Question question) {
+        return new QuestionResponse(
+                question.getId(),
+                question.getTitle(),
+                question.getContent(),
+                question.getViewCount(),
+                new QuestionResponse.CategoryResponse(
+                        question.getCategory().name(),
+                        question.getCategory().getDisplayName()
+                ),
+                question.getCreatedAt(),
+                new QuestionResponse.UserResponse(
+                        question.getUser().getId(),
+                        question.getUser().getUsername()
+                )
+        );
     }
 
     /**
