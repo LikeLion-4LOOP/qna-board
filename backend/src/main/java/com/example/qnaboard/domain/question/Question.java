@@ -27,6 +27,13 @@ public class Question {
     @Column(nullable = false)
     private int viewCount = 0;
 
+    // 정렬용 필드
+    @Column(nullable = false)
+    private int commentCount = 0; // 답변 개수
+    public void updateCommentCount(int count) {
+        this.commentCount = count;
+    }
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

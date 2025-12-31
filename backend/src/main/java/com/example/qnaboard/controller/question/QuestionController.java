@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -77,5 +78,14 @@ public class QuestionController {
             @PageableDefault Pageable page
     ) {
         return questionService.getMyQuestions(userDetails.getUserId(), page);
+    }
+
+    // 사용자의 요청에 따라 정렬시킴 (최신/인기/답변많은수)
+    @GetMapping
+    public Page<QuestionResponse> getList(
+            @RequestParam(required = false) String keyword,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return questionService.getQuestionList(keyword, pageable);
     }
 }
