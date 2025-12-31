@@ -4,7 +4,9 @@ import com.example.qnaboard.domain.comment.Comment;
 import com.example.qnaboard.domain.user.User;
 import com.example.qnaboard.dto.comment.request.CommentCreateRequest;
 import com.example.qnaboard.dto.comment.request.CommentUpdateRequest;
+import com.example.qnaboard.dto.comment.response.CommentCreateResponse;
 import com.example.qnaboard.dto.comment.response.CommentResponse;
+import com.example.qnaboard.dto.comment.response.CommentUpdateResponse;
 import com.example.qnaboard.dto.user.response.MyCommentSummaryResponse;
 import com.example.qnaboard.exception.CommentErrorCode;
 import com.example.qnaboard.exception.UserErrorCode;
@@ -27,7 +29,7 @@ public class CommentService {
 
     /* ================= 댓글 작성 ================= */
 
-    public Long createComment(
+    public CommentCreateResponse createComment(
             Long userId,
             Long postId,
             Boolean isQuestion,
@@ -42,9 +44,16 @@ public class CommentService {
                 isQuestion,
                 postId
         );
-
-
-        return commentRepository.save(comment).getId();
+        Comment save = commentRepository.save(comment);
+        CommentCreateResponse commentCreateResponse = new CommentCreateResponse(
+                save.getId(),
+                save.getPostId(),
+                save.isQuestion(),
+                save.getContent(),
+                save.getCreatedAt(),
+                new CommentCreateResponse.UserResponse(save.getUser().getId())
+        );
+        return commentCreateResponse;
     }
 
     /* ================= 댓글 목록 조회 (post 기준) ================= */
@@ -88,7 +97,7 @@ public class CommentService {
 
     /* ================= 댓글 수정 ================= */
 
-    public void updateComment(
+    public CommentUpdateResponse updateComment(
             Long userId,
             Long commentId,
             CommentUpdateRequest request
@@ -101,6 +110,9 @@ public class CommentService {
         validateOwner(comment, userId); //본인 댓글만 수정 가능
 
         comment.updateContent(request.content());
+        CommentUpdateResponse response = new CommentUpdateResponse(comment.getId(),comment.getContent(),comment.getUpdatedAt());
+        return response;
+
     }
 
     /* ================= 댓글 삭제 ================= */
