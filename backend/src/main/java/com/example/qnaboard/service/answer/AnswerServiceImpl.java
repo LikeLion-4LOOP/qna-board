@@ -14,6 +14,7 @@ import com.example.qnaboard.repository.answer.AnswerRepository;
 import com.example.qnaboard.repository.answer.AnswerVoteRepository;
 import com.example.qnaboard.repository.question.QuestionRepository;
 import com.example.qnaboard.repository.user.UserRepository;
+import com.example.qnaboard.service.user.UserPointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 
 
 @Service
@@ -31,6 +33,7 @@ public class AnswerServiceImpl implements AnswerService {
     private final QuestionRepository questionRepository;
     private final UserRepository userRepository;
     private final AnswerVoteRepository answerVoteRepository;
+    private final UserPointService userPointService;
 
     @Override
     public AnswerResponseDto createAnswer(Long questionId, Long userId, AnswerCreateRequest requestDto) {
@@ -47,6 +50,7 @@ public class AnswerServiceImpl implements AnswerService {
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
 
         Answer answer = new Answer(requestDto.getContent(), question, user);
+        userPointService.rewardForPostAnswer(userId);
 
         return AnswerResponseDto.from(answerRepository.save(answer));
     }
@@ -91,6 +95,8 @@ public class AnswerServiceImpl implements AnswerService {
         if (userId == null) {
             throw new BusinessException(AnswerErrorCode.LOGIN_REQUIRED);
         }
+        Long answerPosterId = answerRepository.findById(answerId).orElseThrow(() ->
+                new BusinessException(AnswerErrorCode.ANSWER_NOT_FOUND)).getUser().getId();
 
         Answer target = getAnswerOrThrow(answerId);
 
@@ -107,6 +113,7 @@ public class AnswerServiceImpl implements AnswerService {
                         selected.unselect();
                     }
                 });
+        userPointService.rewardForSelectedAnswer(answerPosterId);
 
         if (!target.isSelect()) {
             target.select();
@@ -119,6 +126,9 @@ public class AnswerServiceImpl implements AnswerService {
         if (userId == null) {
             throw new BusinessException(AnswerErrorCode.LOGIN_REQUIRED);
         }
+
+        Long answerPosterId = answerRepository.findById(answerId).orElseThrow(() ->
+                new BusinessException(AnswerErrorCode.ANSWER_NOT_FOUND)).getUser().getId();
 
         Answer answer = getAnswerOrThrow(answerId);
 
@@ -135,6 +145,7 @@ public class AnswerServiceImpl implements AnswerService {
 
         // setter 대신 도메인 메서드 사용
         answer.upVote();
+        userPointService.rewardForVote(answerPosterId);
 
 
         answerRepository.save(answer);
