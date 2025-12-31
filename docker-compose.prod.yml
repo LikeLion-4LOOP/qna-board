@@ -3,7 +3,7 @@ services:
   mysql:
     image: mysql:8.0
     environment:
-      MYSQL_DATABASE: qna_dev
+      MYSQL_DATABASE: qna_prod
       MYSQL_USER: qna
       MYSQL_PASSWORD: qna123
       MYSQL_ROOT_PASSWORD: root
@@ -23,6 +23,7 @@ services:
     depends_on:
       - mysql
     environment:
+      SPRING_PROFILES_ACTIVE: prod
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: qna_prod
