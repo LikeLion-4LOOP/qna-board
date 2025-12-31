@@ -30,6 +30,8 @@ public interface AnswerService {
 
     // 답변 추천
     void voteAnswer(Long answerId, Long userId);
+    // 조회수 증가
+    AnswerResponseDto getAnswerDetail(Long answerId);
 
     // pageable
     Page<AnswerResponseDto> getAnswersByUser(Long userId, Pageable pageable);

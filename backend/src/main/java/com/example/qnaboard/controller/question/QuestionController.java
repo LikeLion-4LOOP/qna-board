@@ -29,9 +29,7 @@ public class QuestionController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody QuestionCreateRequest request
     ) {
-        QuestionResponse response =
-                questionService.createQuestion(userDetails.getUserId(), request);
-
+        QuestionResponse response = questionService.createQuestion(userDetails.getUserId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

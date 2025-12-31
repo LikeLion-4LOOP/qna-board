@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Answer {
 
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -43,6 +44,9 @@ public class Answer {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(nullable = false)
+    private int viewCount = 0;
 
     /* ======================
        생성 / 수정 시점 자동 처리
@@ -90,5 +94,7 @@ public class Answer {
         this.vote++;
     }
 
-
+    public void increaseViewCount() {
+        this.viewCount++;
+    }
 }

@@ -67,4 +67,7 @@ public class Question {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+    public void increaseViewCount() {
+        this.viewCount++;
+    }
 }

@@ -6,6 +6,7 @@ public record QuestionResponse(
         Long id,
         String title,
         String content,
+        int viewCount,
         CategoryResponse category,
         LocalDateTime createdAt,
         UserResponse user
