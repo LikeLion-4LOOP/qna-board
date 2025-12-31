@@ -13,6 +13,7 @@ import com.example.qnaboard.exception.UserErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.comment.CommentRepository;
 import com.example.qnaboard.repository.user.UserRepository;
+import com.example.qnaboard.service.user.UserPointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +27,7 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
+    private final UserPointService userPointService;
 
     /* ================= 댓글 작성 ================= */
 
@@ -53,6 +55,7 @@ public class CommentService {
                 save.getCreatedAt(),
                 new CommentCreateResponse.UserResponse(save.getUser().getId())
         );
+        userPointService.rewardForPostComment(userId);
         return commentCreateResponse;
     }
 
