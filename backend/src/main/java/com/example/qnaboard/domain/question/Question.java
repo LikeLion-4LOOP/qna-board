@@ -14,6 +14,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Question {
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private QuestionCategory category;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,10 +40,11 @@ public class Question {
     private LocalDateTime updatedAt;
 
     @Builder
-    public Question(String title, String content, User user) {
+    public Question(String title, String content, User user, QuestionCategory category) {
         this.title = title;
         this.content = content;
         this.user = user;
+        this.category = category;
         this.viewCount = 0;
     }
 
@@ -47,9 +52,10 @@ public class Question {
         this.viewCount++;
     }
 
-    public void update(String title, String content) {
+    public void update(String title, String content,QuestionCategory category) {
         this.title = title;
         this.content = content;
+        this.category = category;
     }
 
     @PrePersist

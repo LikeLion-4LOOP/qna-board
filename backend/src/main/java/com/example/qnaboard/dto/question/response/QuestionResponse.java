@@ -6,11 +6,13 @@ public record QuestionResponse(
         Long id,
         String title,
         String content,
+        CategoryResponse category,
         LocalDateTime createdAt,
         UserResponse user
 ) {
-    public record UserResponse(
-            Long id,
-            String username
+    public record UserResponse(Long id, String username) {}
+    public record CategoryResponse(
+            String code,        // DEV_IT
+            String displayName  // 개발/IT
     ) {}
 }
