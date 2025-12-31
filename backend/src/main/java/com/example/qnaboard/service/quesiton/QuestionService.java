@@ -148,4 +148,29 @@ public class QuestionService {
             throw new BusinessException(QuestionErrorCode.UNAUTHORIZED_USER);
         }
     }
+
+    // 질문 목록 검색 기능 new !
+    @Transactional(readOnly = true)
+    public Page<QuestionResponse> getQuestionList(String keyword, Pageable pageable) {
+        Page<Question> questions;
+        if (keyword != null && !keyword.isBlank()) {    // keyword가 비어있지 않으면 검색, 비어있으면 전체 조회
+            questions = questionRepository.findByTitleContainingOrContentContaining(keyword, keyword, pageable);
+        } else {
+            questions = questionRepository.findAll(pageable);
+        }
+        return questions.map(this::convertToQuestionResponse);
+    }
+
+    private QuestionResponse convertToQuestionResponse(Question question) {
+        return new QuestionResponse(
+                question.getId(),
+                question.getTitle(),
+                question.getContent(),
+                question.getCreatedAt(),
+                new QuestionResponse.UserResponse(
+                        question.getUser().getId(),
+                        question.getUser().getUsername()
+                )
+        );
+    }
 }
