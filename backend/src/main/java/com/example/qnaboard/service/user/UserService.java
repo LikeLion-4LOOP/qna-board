@@ -9,11 +9,10 @@ import com.example.qnaboard.exception.UserErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.auth.RefreshTokenRepository;
 import com.example.qnaboard.repository.user.UserRepository;
-import com.example.qnaboard.service.answer.AnswerService; // 프로젝트에 있는 AnswerService 인터페이스 기준
 import com.example.qnaboard.service.answer.AnswerServiceImpl;
 import com.example.qnaboard.service.comment.CommentService;
 
-import com.example.qnaboard.service.quesiton.QuestionService;
+import com.example.qnaboard.service.question.QuestionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

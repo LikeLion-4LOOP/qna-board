@@ -5,7 +5,7 @@ import com.example.qnaboard.dto.question.request.QuestionUpdateRequest;
 import com.example.qnaboard.dto.question.response.QuestionResponse;
 import com.example.qnaboard.dto.user.response.MyQuestionSummaryResponse;
 import com.example.qnaboard.security.CustomUserDetails;
-import com.example.qnaboard.service.quesiton.QuestionService;
+import com.example.qnaboard.service.question.QuestionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
