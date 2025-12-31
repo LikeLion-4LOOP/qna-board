@@ -174,6 +174,8 @@ public class QuestionService {
                 question.getId(),
                 question.getTitle(),
                 question.getContent(),
+                question.getViewCount(),
+                new QuestionResponse.CategoryResponse(question.getCategory().name(),question.getCategory().getDisplayName()),
                 question.getCreatedAt(),
                 new QuestionResponse.UserResponse(
                         question.getUser().getId(),
