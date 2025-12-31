@@ -88,15 +88,12 @@ public class UserService {
      * - QuestionService가 아직 없으니 스켈레톤 유지
      */
     public Page<MyQuestionSummaryResponse> getMyQuestions(Long userId, Pageable pageable) {
-        /*return questionService.getMyQuestion(userId, pageable)
+        return questionService.getMyQuestions(userId, pageable)
                 .map(question -> new MyQuestionSummaryResponse(
                         question.getId(),
                         question.getTitle(),
-                        question.getTag(),
-                        question.getCreatedAt(),
-                        question.getIsSolved()
-        ))*/
-        return Page.empty(pageable);
+                        question.getCreatedAt()
+        ));
     }
 
     /**

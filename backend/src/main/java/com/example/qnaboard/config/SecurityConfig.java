@@ -43,8 +43,10 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**","/users/signup").permitAll()
+                        .requestMatchers("/auth/**","/users/signup","/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/questions/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/questions/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/comments/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(

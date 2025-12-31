@@ -122,7 +122,7 @@ public class CommentService {
     /* ================= 공통 로직 ================= */
 
     private void validateOwner(Comment comment, Long userId) {
-        if (!comment.getUser().equals(userId)) {
+        if (!comment.getUser().getId().equals(userId)) {
             throw new BusinessException(CommentErrorCode.COMMENT_FORBIDDEN);
         }
     }
