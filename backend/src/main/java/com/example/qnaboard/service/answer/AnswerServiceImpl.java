@@ -8,6 +8,7 @@ import com.example.qnaboard.dto.answer.AnswerCreateRequest;
 import com.example.qnaboard.dto.answer.AnswerResponseDto;
 import com.example.qnaboard.dto.answer.AnswerUpdateRequestDto;
 import com.example.qnaboard.exception.AnswerErrorCode;
+import com.example.qnaboard.exception.QuestionErrorCode;
 import com.example.qnaboard.exception.UserErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.answer.AnswerRepository;
@@ -43,7 +44,7 @@ public class AnswerServiceImpl implements AnswerService {
         validateContent(requestDto.getContent());
 
         Question question =   questionRepository.findById(questionId)
-                .orElseThrow(() -> new BusinessException(AnswerErrorCode.QUESTION_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(QuestionErrorCode.QUESTION_NOT_FOUND));
         // question errorcode 변경예정
 
         User user = userRepository.findById(userId)
