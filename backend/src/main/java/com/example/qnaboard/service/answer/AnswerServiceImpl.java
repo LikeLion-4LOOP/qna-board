@@ -153,6 +153,25 @@ public class AnswerServiceImpl implements AnswerService {
     }
 
     @Override
+    @Transactional
+    public void unvoteAnswer(Long answerId, Long userId) {
+        if (userId == null) {
+            throw new BusinessException(AnswerErrorCode.LOGIN_REQUIRED);
+        }
+
+        Answer answer = getAnswerOrThrow(answerId);
+
+        Optional<AnswerVote> voteOpt = answerVoteRepository.findByAnswer_IdAndUser_Id(answerId, userId);
+        if (voteOpt.isEmpty()) {
+            throw new BusinessException(AnswerErrorCode.VOTE_NOT_FOUND);
+        }
+
+        answerVoteRepository.delete(voteOpt.get());
+        answer.downVote();
+        answerRepository.save(answer);
+    }
+
+    @Override
     public Page<AnswerResponseDto> getAnswersByUser(Long userId, Pageable pageable) {
         return answerRepository.findByUser_Id(userId, pageable)
                 .map(AnswerResponseDto::from);

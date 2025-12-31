@@ -31,6 +31,9 @@ public interface AnswerService {
     // 답변 추천
     void voteAnswer(Long answerId, Long userId);
 
+    // 답변 추천 취소
+    void unvoteAnswer(Long answerId, Long userId);
+
     // pageable
     Page<AnswerResponseDto> getAnswersByUser(Long userId, Pageable pageable);
 }

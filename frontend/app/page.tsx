@@ -79,7 +79,8 @@ export default function Home() {
       setLoading(true);
       setError(null);
       const data = await questionApi.getQuestions();
-      setQuestions(data);
+      // 배열인지 확인하고, 배열이 아니면 빈 배열로 처리
+      setQuestions(Array.isArray(data) ? data : []);
       setUseExampleData(false);
     } catch (err) {
       console.error('질문 목록 로드 실패:', err);
@@ -92,8 +93,11 @@ export default function Home() {
     }
   };
 
+  // questions가 배열인지 확인
+  const questionsArray = Array.isArray(questions) ? questions : [];
+
   // 인기 질문 (조회수 + 답변 수 기준)
-  const popularQuestions = [...questions]
+  const popularQuestions = [...questionsArray]
     .sort((a, b) => {
       const aScore = (a.viewCount || 0) + (a.answerCount || 0) * 2;
       const bScore = (b.viewCount || 0) + (b.answerCount || 0) * 2;
@@ -102,16 +106,16 @@ export default function Home() {
     .slice(0, 3);
 
   // 최신 질문
-  const latestQuestions = [...questions]
+  const latestQuestions = [...questionsArray]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3);
 
   // 통계 계산
   const stats = {
-    totalQuestions: questions.length,
-    totalAnswers: questions.reduce((sum, q) => sum + (q.answerCount || 0), 0),
-    totalViews: questions.reduce((sum, q) => sum + (q.viewCount || 0), 0),
-    todayQuestions: questions.filter((q) => {
+    totalQuestions: questionsArray.length,
+    totalAnswers: questionsArray.reduce((sum, q) => sum + (q.answerCount || 0), 0),
+    totalViews: questionsArray.reduce((sum, q) => sum + (q.viewCount || 0), 0),
+    todayQuestions: questionsArray.filter((q) => {
       const today = new Date();
       const questionDate = new Date(q.createdAt);
       return (
@@ -274,9 +278,9 @@ export default function Home() {
                         <div className="flex items-center gap-3 text-xs text-slate-500">
                           <span className="flex items-center gap-1">
                             <div className="w-4 h-4 bg-slate-300 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                              {question.username.charAt(0).toUpperCase()}
+                              {question.username?.charAt(0)?.toUpperCase() || '?'}
                             </div>
-                            {question.username}
+                            {question.username || '익명'}
                           </span>
                           <span className="text-xs">{new Date(question.createdAt).toLocaleString('ko-KR')}</span>
                         </div>

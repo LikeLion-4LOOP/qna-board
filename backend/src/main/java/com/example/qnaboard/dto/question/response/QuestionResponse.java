@@ -7,6 +7,7 @@ public record QuestionResponse(
         String title,
         String content,
         LocalDateTime createdAt,
+        LocalDateTime updatedAt,
         UserResponse user
 ) {
     public record UserResponse(

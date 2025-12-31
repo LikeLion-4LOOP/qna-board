@@ -50,6 +50,7 @@ public class QuestionService {
                 saved.getTitle(),
                 saved.getContent(),
                 saved.getCreatedAt(),
+                saved.getUpdatedAt(),
                 new QuestionResponse.UserResponse(
                         user.getId(),
                         user.getUsername()
@@ -66,6 +67,7 @@ public class QuestionService {
                         question.getTitle(),
                         question.getContent(),
                         question.getCreatedAt(),
+                        question.getUpdatedAt(),
                         new QuestionResponse.UserResponse(
                                 question.getUser().getId(),
                                 question.getUser().getUsername()
@@ -84,6 +86,7 @@ public class QuestionService {
                 question.getTitle(),
                 question.getContent(),
                 question.getCreatedAt(),
+                question.getUpdatedAt(),
                 new QuestionResponse.UserResponse(
                         question.getUser().getId(),
                         question.getUser().getUsername()
@@ -109,6 +112,7 @@ public class QuestionService {
                 question.getTitle(),
                 question.getContent(),
                 question.getCreatedAt(),
+                question.getUpdatedAt(),
                 new QuestionResponse.UserResponse(
                         question.getUser().getId(),
                         question.getUser().getUsername()

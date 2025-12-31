@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -90,5 +89,10 @@ public class Answer {
         this.vote++;
     }
 
+    public void downVote() {
+        if (this.vote > 0) {
+            this.vote--;
+        }
+    }
 
 }

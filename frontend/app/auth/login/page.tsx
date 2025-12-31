@@ -21,8 +21,8 @@ export default function LoginPage() {
 
     try {
       await authApi.login(formData.userId, formData.password);
-      router.push('/');
-      router.refresh();
+      // 로그인 성공 후 강제 새로고침하여 Navbar 업데이트
+      window.location.href = '/';
     } catch (err: any) {
       console.error('로그인 에러:', err);
       // 더 자세한 에러 메시지 표시
@@ -32,6 +32,8 @@ export default function LoginPage() {
         const status = err.response.status;
         if (status === 401) {
           setError(`아이디 또는 비밀번호가 올바르지 않습니다. (${errorMessage})`);
+        } else if (status === 404) {
+          setError(`사용자를 찾을 수 없습니다. 회원가입을 먼저 진행해주세요. (${errorMessage})`);
         } else {
           setError(`서버 오류가 발생했습니다. (${status}: ${errorMessage})`);
         }

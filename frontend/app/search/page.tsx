@@ -89,9 +89,9 @@ function SearchContent() {
               <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                    {question.username.charAt(0).toUpperCase()}
+                    {question.username?.charAt(0)?.toUpperCase() || '?'}
                   </div>
-                  <span className="text-sm text-slate-600 font-medium">{question.username}</span>
+                  <span className="text-sm text-slate-600 font-medium">{question.username || '익명'}</span>
                 </div>
                 <span className="text-xs text-slate-400">
                   {new Date(question.createdAt).toLocaleString('ko-KR')}

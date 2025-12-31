@@ -78,7 +78,9 @@ export default function EditQuestionPage() {
         content: formData.content,
         tag: tagValue || undefined,
       });
+      // 질문 수정 후 상세 페이지로 이동하고 새로고침하여 수정 시간 반영
       router.push(`/questions/${questionId}`);
+      router.refresh();
     } catch (err: any) {
       setError(err.response?.data?.message || '질문 수정에 실패했습니다.');
     } finally {

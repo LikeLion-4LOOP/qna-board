@@ -6,9 +6,10 @@ import Link from 'next/link';
 import { questionApi, Question } from '@/api/question';
 import { answerApi, AnswerResponse } from '@/api/answer';
 import { commentApi, CommentResponse } from '@/api/comment';
+import { userApi } from '@/api/user';
 import { isAuthenticated } from '@/lib/auth';
 import AnswerList from '@/components/AnswerList';
-import CommentList from '@/components/CommentList';
+import CommentModal from '@/components/CommentModal';
 import ReportModal from '@/components/ReportModal';
 import BlockUserModal from '@/components/BlockUserModal';
 import { CATEGORIES } from '@/lib/categories';
@@ -23,14 +24,39 @@ export default function QuestionDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
+  const [showCommentModal, setShowCommentModal] = useState(false);
   const [liked, setLiked] = useState(false);
-  const [disliked, setDisliked] = useState(false);
 
   useEffect(() => {
-    setAuthenticated(isAuthenticated());
+    const checkAuth = async () => {
+      const auth = isAuthenticated();
+      setAuthenticated(auth);
+      if (auth) {
+        try {
+          const user = await userApi.getUser();
+          setCurrentUserId(user.id);
+        } catch (err) {
+          console.error('사용자 정보 로딩 실패:', err);
+          setCurrentUserId(null);
+        }
+      } else {
+        setCurrentUserId(null);
+      }
+    };
+    checkAuth();
     loadQuestion();
+  }, [questionId]);
+
+  // URL 변경 감지 (수정 후 돌아올 때)
+  useEffect(() => {
+    const handleFocus = () => {
+      loadQuestion();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [questionId]);
 
   useEffect(() => {
@@ -74,14 +100,7 @@ export default function QuestionDetailPage() {
   };
 
   const handleLike = () => {
-    if (disliked) setDisliked(false);
     setLiked(!liked);
-    // TODO: 백엔드 API 호출
-  };
-
-  const handleDislike = () => {
-    if (liked) setLiked(false);
-    setDisliked(!disliked);
     // TODO: 백엔드 API 호출
   };
 
@@ -136,22 +155,55 @@ export default function QuestionDetailPage() {
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 mb-8 animate-fade-in">
         <div className="flex justify-between items-start mb-6">
           <h1 className="text-4xl font-bold text-slate-900 flex-1 pr-4">{question.title}</h1>
-          {authenticated && (
-            <div className="flex space-x-2">
-              <Link
-                href={`/questions/${questionId}/edit`}
-                className="px-4 py-2 text-sm bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 font-medium transition-colors"
-              >
-                수정
-              </Link>
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2 text-sm bg-red-100 text-red-700 rounded-xl hover:bg-red-200 font-medium transition-colors"
-              >
-                삭제
-              </button>
+          <div className="flex items-center gap-4">
+            {/* 사용자 프로필 및 정보 */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold">
+                {question.username?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+              <div>
+                <div className="font-semibold text-slate-900 text-sm">{question.username || '익명'}</div>
+                <div className="text-xs text-slate-500">
+                  {formatDate(question.createdAt)}
+                  {question.modifiedAt && question.modifiedAt !== question.createdAt && (
+                    <span className="ml-2">(수정: {formatDate(question.modifiedAt)})</span>
+                  )}
+                </div>
+              </div>
             </div>
-          )}
+            {authenticated && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  className="px-3 py-1.5 text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"
+                >
+                  사용자 신고
+                </button>
+                <button
+                  onClick={() => setShowBlockModal(true)}
+                  className="px-3 py-1.5 text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"
+                >
+                  사용자 차단
+                </button>
+              </div>
+            )}
+            {authenticated && currentUserId !== null && question.user && currentUserId === question.user.id && (
+              <div className="flex space-x-2">
+                <Link
+                  href={`/questions/${questionId}/edit`}
+                  className="px-4 py-2 text-sm bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 font-medium transition-colors"
+                >
+                  수정
+                </Link>
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-2 text-sm bg-red-100 text-red-700 rounded-xl hover:bg-red-200 font-medium transition-colors"
+                >
+                  삭제
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {question.tag && (() => {
@@ -184,74 +236,33 @@ export default function QuestionDetailPage() {
 
         <div className="mb-6 text-slate-700 whitespace-pre-wrap leading-relaxed text-lg">{question.content}</div>
 
-        <div className="flex items-center justify-between pt-6 border-t border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold">
-              {question.username.charAt(0).toUpperCase()}
-            </div>
-            <div className="flex-1">
-              <div className="font-semibold text-slate-900">{question.username}</div>
-              <div className="text-sm text-slate-500">{formatDate(question.createdAt)}</div>
-            </div>
-            {authenticated && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowReportModal(true)}
-                  className="px-3 py-1.5 text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"
-                >
-                  사용자 신고
-                </button>
-                <button
-                  onClick={() => setShowBlockModal(true)}
-                  className="px-3 py-1.5 text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"
-                >
-                  사용자 차단
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            {authenticated && (
-              <>
-                <button
-                  onClick={handleLike}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                    liked
-                      ? 'bg-indigo-100 text-indigo-700'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  <svg className="w-5 h-5" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                  </svg>
-                  좋아요
-                </button>
-                <button
-                  onClick={handleDislike}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                    disliked
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  <svg className="w-5 h-5" fill={disliked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
-                  </svg>
-                  싫어요
-                </button>
-                <button
-                  onClick={() => setShowReportModal(true)}
-                  className="px-3 py-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
-                >
-                  신고
-                </button>
-              </>
-            )}
-          </div>
+        <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-200">
+          {authenticated && (
+            <button
+              onClick={handleLike}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                liked
+                  ? 'bg-indigo-100 text-indigo-700'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <svg className="w-5 h-5" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+              </svg>
+              좋아요
+            </button>
+          )}
+          <button
+            onClick={() => setShowCommentModal(true)}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg font-medium transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            댓글 보기
+          </button>
         </div>
       </div>
-
-      <CommentList postId={questionId} isQuestion={true} />
 
       <div className="mt-8">
         <h2 className="text-3xl font-bold text-slate-900 mb-6 flex items-center gap-3">
@@ -265,6 +276,8 @@ export default function QuestionDetailPage() {
             loadAnswers();
           }}
           authenticated={authenticated}
+          questionUserId={question.user?.id || null}
+          currentUserId={currentUserId}
         />
       </div>
 
@@ -283,6 +296,14 @@ export default function QuestionDetailPage() {
           username={question.username}
         />
       )}
+
+      <CommentModal
+        isOpen={showCommentModal}
+        onClose={() => setShowCommentModal(false)}
+        postId={questionId}
+        isQuestion={true}
+        title="질문 댓글"
+      />
     </div>
   );
 }

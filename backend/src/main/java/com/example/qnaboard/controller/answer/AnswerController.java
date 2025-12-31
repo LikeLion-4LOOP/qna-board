@@ -96,4 +96,17 @@ public class AnswerController {
     ) {
         answerService.voteAnswer(answerId, userDetails.getUserId());
     }
+
+    /**
+     * 7) 답변 추천 취소 (로그인 필요)
+     * DELETE /api/answers/{answerId}/vote
+     */
+    @DeleteMapping("/answers/{answerId}/vote")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unvoteAnswer(
+            @PathVariable Long answerId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        answerService.unvoteAnswer(answerId, userDetails.getUserId());
+    }
 }

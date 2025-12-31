@@ -75,6 +75,10 @@ export const answerApi = {
   voteAnswer: async (answerId: number): Promise<void> => {
     await apiClient.post(`/api/answers/${answerId}/vote`);
   },
+
+  unvoteAnswer: async (answerId: number): Promise<void> => {
+    await apiClient.delete(`/api/answers/${answerId}/vote`);
+  },
 };
 
 

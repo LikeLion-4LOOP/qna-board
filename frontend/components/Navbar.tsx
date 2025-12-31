@@ -1,17 +1,27 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { isAuthenticated, clearTokens } from '@/lib/auth';
 import { authApi } from '@/api/auth';
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
+    // 페이지 변경 시마다 인증 상태 확인
     setAuthenticated(isAuthenticated());
+  }, [pathname]);
+
+  // 주기적으로 인증 상태 확인 (로그인/로그아웃 후 즉시 반영)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAuthenticated(isAuthenticated());
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = async () => {
