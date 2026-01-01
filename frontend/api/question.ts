@@ -4,14 +4,19 @@ export interface Question {
   id: number;
   title: string;
   content: string;
+
   username: string;
   user?: {
     id: number;
     username: string;
   };
+
   tag?: string;
+
   createdAt: string;
-  modifiedAt?: string;
+  updatedAt?: string | null; // 추가
+  modifiedAt?: string; // <-- 어디서 쓰는거죠?
+
   answerCount?: number;
   viewCount?: number;
 }
@@ -28,21 +33,22 @@ export interface QuestionUpdateRequest {
   content: string;
   tag?: string;
 }
-
+// front배포로 코드 바꿈
 export const questionApi = {
   getQuestions: async (search?: string, sortBy?: string): Promise<Question[]> => {
     const params: Record<string, string> = {};
     if (search) params.search = search;
     if (sortBy) params.sortBy = sortBy;
-    const response = await apiClient.get<any>('/api/questions', { params });
+    const response = await apiClient.get<unknown>('/api/questions', { params }); // any->unknown으로 변경
     // Spring Data Page 객체인 경우 content 필드에서 배열 추출
-    if (response.data && Array.isArray(response.data.content)) {
-      return response.data.content;
-    }
+      if (response.data && typeof response.data === 'object' && 'content' in response.data) {
+          const page = response.data as { content: Question[] };
+          return Array.isArray(page.content) ? page.content : [];
+      }
     // 이미 배열인 경우 그대로 반환
-    if (Array.isArray(response.data)) {
-      return response.data;
-    }
+      if (Array.isArray(response.data)) {
+          return response.data as Question[];
+      }
     // 그 외의 경우 빈 배열 반환
     return [];
   },
