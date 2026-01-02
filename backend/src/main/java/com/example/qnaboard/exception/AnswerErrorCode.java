@@ -17,6 +17,8 @@ public enum AnswerErrorCode implements ErrorCode {
     ANSWER_SELECTED_CANNOT_DELETE(HttpStatus.CONFLICT, "ANSWER_409", "채택된 답변은 삭제할 수 없습니다. 채택 해제 후 삭제하세요."),
     ANSWER_CANNOT_SELECT_NO_QUESTION(HttpStatus.CONFLICT, "ANSWER_409_1", "questionId가 없어 채택할 수 없습니다."),
     ALREADY_VOTED(HttpStatus.CONFLICT, "ANSWER_409_2", "이미 추천한 답변입니다."),
+    ALREADY_SELECTED(HttpStatus.CONFLICT, "ANSWER_409_3", "채택은 1번만 가능합니다."),
+    SELF_ANSWER_CANNOT_SELECT(HttpStatus.FORBIDDEN, "ANSWER_403_1", "자신의 답변은 채택할 수 없습니다."),
     VOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "ANSWER_404_1", "추천을 찾을 수 없습니다.");
 
     private final HttpStatus status;

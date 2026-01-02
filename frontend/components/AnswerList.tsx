@@ -23,26 +23,38 @@ export default function AnswerList({ questionId, answers, onUpdate, authenticate
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!authenticated) {
-      alert('로그인이 필요합니다.');
-      return;
-    }
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
 
-    setError(null);
-    setLoading(true);
+        if (!authenticated) {
+            alert('로그인이 필요합니다.');
+            return;
+        }
 
-    try {
-      await answerApi.createAnswer(questionId, { content });
-      setContent('');
-      onUpdate();
-    } catch (err: any) {
-      setError(err.response?.data?.message || '답변 작성에 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
+        // 공백만 입력한 경우 방지
+        if (!content.trim()) {
+            setError('답변 내용을 입력해주세요.');
+            return;
+        }
+
+        setError(null);
+        setLoading(true);
+
+        try {
+            await answerApi.createAnswer(questionId, { content: content.trim() });
+            setContent('');
+            setShowAnswerForm(false); // ✅ 성공했을 때만 닫기
+            onUpdate();
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message || '답변 작성에 실패했습니다.');
+            } else {
+                setError('답변 작성에 실패했습니다.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
   const [showAnswerForm, setShowAnswerForm] = useState(false);
 
@@ -73,10 +85,7 @@ export default function AnswerList({ questionId, answers, onUpdate, authenticate
                   {error}
                 </div>
               )}
-              <form onSubmit={(e) => {
-                handleSubmit(e);
-                setShowAnswerForm(false);
-              }}>
+                <form onSubmit={handleSubmit}>
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}

@@ -37,6 +37,7 @@ public class AnswerServiceImpl implements AnswerService {
     private final UserPointService userPointService;
 
     @Override
+    @Transactional
     public AnswerResponseDto createAnswer(Long questionId, Long userId, AnswerCreateRequest requestDto) {
         if (userId == null) {
             throw new BusinessException(AnswerErrorCode.LOGIN_REQUIRED);
@@ -93,31 +94,36 @@ public class AnswerServiceImpl implements AnswerService {
     @Override
     @Transactional
     public void selectAnswer(Long answerId, Long userId) {
-        if (userId == null) {
-            throw new BusinessException(AnswerErrorCode.LOGIN_REQUIRED);
-        }
-        Long answerPosterId = answerRepository.findById(answerId).orElseThrow(() ->
-                new BusinessException(AnswerErrorCode.ANSWER_NOT_FOUND)).getUser().getId();
+        requireLogin(userId);
 
         Answer target = getAnswerOrThrow(answerId);
 
-        Long ownerId = target.getQuestion().getUser().getId();
-        if (!ownerId.equals(userId)) {
+        // 1) 질문 작성자만 채택 가능
+        Long questionOwnerId = target.getQuestion().getUser().getId();
+        if (!questionOwnerId.equals(userId)) {
             throw new BusinessException(AnswerErrorCode.ANSWER_FORBIDDEN);
+        }
+
+        // 2) 자기 답변 채택 금지
+        Long answerWriterId = target.getUser().getId();
+        if (answerWriterId.equals(userId)) {
+            throw new BusinessException(AnswerErrorCode.SELF_ANSWER_CANNOT_SELECT);
         }
 
         Long questionId = target.getQuestion().getId();
 
+        // 3) 이미 채택된 답변이 있으면 변경 불가
         answerRepository.findByQuestion_IdAndIsSelectTrue(questionId)
                 .ifPresent(selected -> {
                     if (!selected.getId().equals(answerId)) {
-                        selected.unselect();
+                        throw new BusinessException(AnswerErrorCode.ALREADY_SELECTED);
                     }
                 });
-        userPointService.rewardForSelectedAnswer(answerPosterId);
 
+        // 4) 처음 채택될 때만 채택 처리 + 포인트 지급
         if (!target.isSelect()) {
             target.select();
+            userPointService.rewardForSelectedAnswer(answerWriterId);
         }
     }
 
