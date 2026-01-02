@@ -45,9 +45,13 @@ public class UserService {
         String username = req.getUsername();
 
 
-        if (userRepository.existsByUsername(username)) {
+        if(userRepository.existsByUserId(userid)){
             throw new BusinessException(UserErrorCode.ID_ALREADY_EXISTS);
         }
+        if (userRepository.existsByUsername(username)) {
+            throw new BusinessException(UserErrorCode.USERNAME_ALREADY_EXISTS);
+        }
+
 
         String encoded = passwordEncoder.encode(password);
 
