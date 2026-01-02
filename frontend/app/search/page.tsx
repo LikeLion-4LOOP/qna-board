@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { questionApi, Question } from '@/api/question';
+import { CATEGORIES } from '@/lib/categories';
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -78,7 +79,44 @@ function SearchContent() {
                   <h2 className="text-xl font-bold text-slate-900 hover:text-indigo-600 transition-colors mb-2">
                     {question.title}
                   </h2>
-                  {question.tag && (
+                  {question.category && (() => {
+                    // 백엔드 enum code를 프론트엔드 category ID로 변환
+                    const enumToCategoryId: Record<string, string> = {
+                      'DEV_IT': 'dev',
+                      'EDUCATION': 'education',
+                      'HEALTH': 'health',
+                      'COOKING': 'cooking',
+                      'TRAVEL': 'travel',
+                      'SHOPPING': 'shopping',
+                      'LIFE': 'lifestyle',
+                      'HOBBY': 'hobby',
+                      'SPORTS': 'sports',
+                      'PET': 'pet',
+                      'CAR': 'car',
+                      'FINANCE': 'finance',
+                      'REAL_ESTATE': 'realestate',
+                      'LAW': 'law',
+                      'JOB': 'career',
+                      'ETC': 'etc',
+                    };
+                    const categoryId = enumToCategoryId[question.category.code] || 'etc';
+                    const categoryMatch = CATEGORIES.find(cat => cat.id === categoryId);
+                    
+                    if (categoryMatch) {
+                      return (
+                        <span className={`inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r ${categoryMatch.color} text-white rounded-lg text-xs font-semibold`}>
+                          <span>{categoryMatch.icon}</span>
+                          {categoryMatch.name}
+                        </span>
+                      );
+                    }
+                    return (
+                      <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold">
+                        {question.category.displayName}
+                      </span>
+                    );
+                  })()}
+                  {!question.category && question.tag && (
                     <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold">
                       {question.tag}
                     </span>

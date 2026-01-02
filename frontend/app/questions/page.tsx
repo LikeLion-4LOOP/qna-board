@@ -57,10 +57,16 @@ export default function QuestionsPage() {
     // 카테고리 필터
     if (selectedCategory) {
       const categoryName = getCategoryById(selectedCategory).name;
-      filtered = filtered.filter((q) => q.tag && q.tag.includes(categoryName));
+      filtered = filtered.filter((q) => {
+        if (q.category) {
+          return q.category.displayName === categoryName;
+        }
+        // 하위 호환성: tag가 있는 경우
+        return q.tag && q.tag.includes(categoryName);
+      });
     }
 
-    // 태그 필터
+    // 태그 필터 (하위 호환성)
     if (selectedTag && !selectedCategory) {
       filtered = filtered.filter((q) => q.tag === selectedTag);
     }
@@ -86,7 +92,13 @@ export default function QuestionsPage() {
   // 카테고리별 질문 수 계산
   const getCategoryCount = (categoryId: CategoryId) => {
     const categoryName = getCategoryById(categoryId).name;
-    return questions.filter((q) => q.tag && q.tag.includes(categoryName)).length;
+    return questions.filter((q) => {
+      if (q.category) {
+        return q.category.displayName === categoryName;
+      }
+      // 하위 호환성: tag가 있는 경우
+      return q.tag && q.tag.includes(categoryName);
+    }).length;
   };
 
   // 모든 카테고리의 질문 수 맵 생성
@@ -265,8 +277,29 @@ export default function QuestionsPage() {
                     {question.title}
                   </h2>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {question.tag && (() => {
-                      const categoryMatch = CATEGORIES.find(cat => question.tag?.includes(cat.name));
+                    {question.category && (() => {
+                      // 백엔드 enum code를 프론트엔드 category ID로 변환
+                      const enumToCategoryId: Record<string, string> = {
+                        'DEV_IT': 'dev',
+                        'EDUCATION': 'education',
+                        'HEALTH': 'health',
+                        'COOKING': 'cooking',
+                        'TRAVEL': 'travel',
+                        'SHOPPING': 'shopping',
+                        'LIFE': 'lifestyle',
+                        'HOBBY': 'hobby',
+                        'SPORTS': 'sports',
+                        'PET': 'pet',
+                        'CAR': 'car',
+                        'FINANCE': 'finance',
+                        'REAL_ESTATE': 'realestate',
+                        'LAW': 'law',
+                        'JOB': 'career',
+                        'ETC': 'etc',
+                      };
+                      const categoryId = enumToCategoryId[question.category.code] || 'etc';
+                      const categoryMatch = CATEGORIES.find(cat => cat.id === categoryId);
+                      
                       if (categoryMatch) {
                         return (
                           <span
@@ -280,10 +313,10 @@ export default function QuestionsPage() {
                       }
                       return (
                         <span
-                          key="tag"
+                          key="category"
                           className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold"
                         >
-                          {question.tag}
+                          {question.category.displayName}
                         </span>
                       );
                     })()}

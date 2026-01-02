@@ -44,16 +44,16 @@ export default function NewQuestionPage() {
     setLoading(true);
 
     try {
-      // 카테고리와 태그를 합쳐서 tag 필드로 전송
-      const tagValue = formData.category 
-        ? `${CATEGORIES.find(c => c.id === formData.category)?.name}${formData.tag ? `, ${formData.tag}` : ''}`
-        : formData.tag;
-      
+      if (!formData.category) {
+        setError('카테고리를 선택해주세요.');
+        setLoading(false);
+        return;
+      }
+
       await questionApi.createQuestion({
         title: formData.title,
         content: formData.content,
-        username,
-        tag: tagValue || undefined,
+        category: questionApi.mapCategoryIdToEnum(formData.category),
       });
       router.push('/');
     } catch (err: any) {
