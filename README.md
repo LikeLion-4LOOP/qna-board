@@ -131,11 +131,8 @@ npm install
 npm run dev
 ```
 
-#### MySQL 실행 (별도 설치)
+#### 본인의 로컬 MySQL 실행
 
-- 포트: 3307 (dev 환경)
-- 데이터베이스: qna_dev
-- 사용자: qna / 비밀번호: qna123
 
 ### 2. 로컬 Docker 배포
 
