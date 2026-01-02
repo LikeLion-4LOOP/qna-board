@@ -1,5 +1,4 @@
 spring:
   application:
-    name=qna-board
-  profiles:
-    active: dev
+    name: qna-board
+
