@@ -50,13 +50,8 @@ apiClient.interceptors.response.use(
         errorData: error.response?.data,
       });
 
-      // EXPIRED_TOKEN (AUTH_401_2)이거나 에러 코드가 없는 경우 재발급 시도
-      // (에러 코드가 없어도 토큰 만료일 가능성이 높음)
-      if (
-        errorCode === "AUTH_401_2" ||
-        !errorCode ||
-        errorCode === "AUTH_401"
-      ) {
+      // EXPIRED_TOKEN (AUTH_401_2)인 경우 재발급 시도
+      if (errorCode === "AUTH_401_2") {
         originalRequest._retry = true;
 
         try {
