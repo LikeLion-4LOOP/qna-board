@@ -11,6 +11,12 @@ const apiClient = axios.create({
   },
 });
 
+// 재발급 요청을 단일화하기 위한 Promise 저장소
+let refreshTokenPromise: Promise<{
+  accessToken: string;
+  refreshToken: string;
+}> | null = null;
+
 // 요청 인터셉터: 토큰 자동 추가
 apiClient.interceptors.request.use(
   (config) => {
@@ -69,28 +75,55 @@ apiClient.interceptors.response.use(
             return Promise.reject(error);
           }
 
-          // getDeviceId()를 사용하여 로그인 시와 동일한 deviceId 보장
-          const deviceId = getDeviceId();
-          console.log("토큰 재발급 시도...", { deviceId });
+          // 재발급이 이미 진행 중이면 기존 Promise 재사용 (동시 요청 방지)
+          if (!refreshTokenPromise) {
+            const deviceId = getDeviceId();
+            console.log("토큰 재발급 시도...", { deviceId });
 
-          // refresh 요청은 인터셉터를 거치지 않도록 axios 직접 사용
-          const response = await axios.post(
-            `${API_BASE_URL}/auth/refresh`,
-            {
-              refreshToken,
-              deviceId,
-            },
-            {
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
+            // refresh 요청은 인터셉터를 거치지 않도록 axios 직접 사용
+            refreshTokenPromise = axios
+              .post(
+                `${API_BASE_URL}/auth/refresh`,
+                {
+                  refreshToken,
+                  deviceId,
+                },
+                {
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                }
+              )
+              .then((response) => {
+                const { accessToken, refreshToken: newRefreshToken } =
+                  response.data;
+                localStorage.setItem("accessToken", accessToken);
+                localStorage.setItem("refreshToken", newRefreshToken);
+                console.log("토큰 재발급 성공");
+                return { accessToken, refreshToken: newRefreshToken };
+              })
+              .catch((refreshError: any) => {
+                // 재발급 실패 시 Promise 초기화
+                refreshTokenPromise = null;
+                throw refreshError;
+              })
+              .finally(() => {
+                // 성공/실패 관계없이 Promise 초기화 (다음 재발급을 위해)
+                // 단, catch에서 이미 null로 설정했으므로 여기서는 안전하게 처리
+                setTimeout(() => {
+                  refreshTokenPromise = null;
+                }, 100);
+              });
+          } else {
+            console.log("재발급이 이미 진행 중입니다. 대기...");
+          }
 
-          const { accessToken, refreshToken: newRefreshToken } = response.data;
-          localStorage.setItem("accessToken", accessToken);
-          localStorage.setItem("refreshToken", newRefreshToken);
-          console.log("토큰 재발급 성공");
+          // 재발급 결과 대기 (기존 Promise 재사용 또는 새로 생성된 Promise)
+          if (!refreshTokenPromise) {
+            throw new Error("재발급 Promise가 생성되지 않았습니다.");
+          }
+          const { accessToken, refreshToken: newRefreshToken } =
+            await refreshTokenPromise;
 
           // 원래 요청 재시도
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
@@ -126,6 +159,8 @@ apiClient.interceptors.response.use(
             );
           }
 
+          // Promise 초기화
+          refreshTokenPromise = null;
           originalRequest._retry = false; // 재시도 플래그 초기화
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");

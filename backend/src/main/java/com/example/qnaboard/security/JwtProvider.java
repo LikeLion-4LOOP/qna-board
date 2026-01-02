@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtProvider {
@@ -38,6 +39,7 @@ public class JwtProvider {
 
     public String createAccessToken(Long userId) {
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(String.valueOf(userId))
                 .claim("typ", "access")
                 .issuedAt(new Date())
@@ -54,6 +56,7 @@ public class JwtProvider {
         Instant now = Instant.now();
 
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(String.valueOf(userId))
                 .claim("typ", "refresh")
                 .issuedAt(Date.from(now))
