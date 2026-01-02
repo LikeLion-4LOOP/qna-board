@@ -35,23 +35,36 @@ export default function EditQuestionPage() {
     try {
       const data = await questionApi.getQuestion(questionId);
       setQuestion(data);
-      // 태그에서 카테고리 추출
+      
+      // category에서 카테고리 추출
       let category: CategoryId | '' = '';
-      let tag = data.tag || '';
-      if (data.tag) {
-        const categoryMatch = CATEGORIES.find(cat => data.tag?.includes(cat.name));
-        if (categoryMatch) {
-          category = categoryMatch.id;
-          // 카테고리 이름 제거하고 나머지 태그만 추출
-          const parts = data.tag.split(',');
-          tag = parts.length > 1 ? parts.slice(1).join(',').trim() : '';
-        }
+      if (data.category) {
+        // 백엔드 enum code를 프론트엔드 category ID로 변환
+        const enumToCategoryId: Record<string, CategoryId> = {
+          'DEV_IT': 'dev',
+          'EDUCATION': 'education',
+          'HEALTH': 'health',
+          'COOKING': 'cooking',
+          'TRAVEL': 'travel',
+          'SHOPPING': 'shopping',
+          'LIFE': 'lifestyle',
+          'HOBBY': 'hobby',
+          'SPORTS': 'sports',
+          'PET': 'pet',
+          'CAR': 'car',
+          'FINANCE': 'finance',
+          'REAL_ESTATE': 'realestate',
+          'LAW': 'law',
+          'JOB': 'career',
+          'ETC': 'etc',
+        };
+        category = enumToCategoryId[data.category.code] || 'etc';
       }
 
       setFormData({
         title: data.title,
         content: data.content,
-        tag,
+        tag: '', // 태그는 더 이상 사용하지 않음
         category,
       });
     } catch (err) {
@@ -68,15 +81,16 @@ export default function EditQuestionPage() {
     setSubmitting(true);
 
     try {
-      // 카테고리와 태그를 합쳐서 tag 필드로 전송
-      const tagValue = formData.category 
-        ? `${CATEGORIES.find(c => c.id === formData.category)?.name}${formData.tag ? `, ${formData.tag}` : ''}`
-        : formData.tag;
-      
+      if (!formData.category) {
+        setError('카테고리를 선택해주세요.');
+        setSubmitting(false);
+        return;
+      }
+
       await questionApi.updateQuestion(questionId, {
         title: formData.title,
         content: formData.content,
-        tag: tagValue || undefined,
+        category: questionApi.mapCategoryIdToEnum(formData.category),
       });
       // 질문 수정 후 상세 페이지로 이동하고 새로고침하여 수정 시간 반영
       router.push(`/questions/${questionId}`);

@@ -206,8 +206,29 @@ export default function QuestionDetailPage() {
           </div>
         </div>
 
-        {question.tag && (() => {
-          const categoryMatch = CATEGORIES.find(cat => question.tag?.includes(cat.name));
+        {question.category && (() => {
+          // 백엔드 enum code를 프론트엔드 category ID로 변환
+          const enumToCategoryId: Record<string, string> = {
+            'DEV_IT': 'dev',
+            'EDUCATION': 'education',
+            'HEALTH': 'health',
+            'COOKING': 'cooking',
+            'TRAVEL': 'travel',
+            'SHOPPING': 'shopping',
+            'LIFE': 'lifestyle',
+            'HOBBY': 'hobby',
+            'SPORTS': 'sports',
+            'PET': 'pet',
+            'CAR': 'car',
+            'FINANCE': 'finance',
+            'REAL_ESTATE': 'realestate',
+            'LAW': 'law',
+            'JOB': 'career',
+            'ETC': 'etc',
+          };
+          const categoryId = enumToCategoryId[question.category.code] || 'etc';
+          const categoryMatch = CATEGORIES.find(cat => cat.id === categoryId);
+          
           if (categoryMatch) {
             return (
               <div className="mb-4 flex flex-wrap gap-2">
@@ -217,18 +238,13 @@ export default function QuestionDetailPage() {
                   <span className="text-lg">{categoryMatch.icon}</span>
                   {categoryMatch.name}
                 </span>
-                {question.tag.split(',').length > 1 && (
-                  <span className="inline-block px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">
-                    {question.tag.split(',').slice(1).join(',').trim()}
-                  </span>
-                )}
               </div>
             );
           }
           return (
             <div className="mb-4">
               <span className="inline-block px-4 py-2 bg-indigo-100 text-indigo-700 rounded-xl text-sm font-semibold">
-                {question.tag}
+                {question.category.displayName}
               </span>
             </div>
           );

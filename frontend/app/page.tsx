@@ -192,9 +192,33 @@ export default function Home() {
               ) : (
                 <div className="space-y-2">
                   {popularQuestions.map((question, index) => {
-                    const categoryMatch = question.tag
-                      ? CATEGORIES.find((cat) => question.tag?.includes(cat.name))
-                      : null;
+                    let categoryMatch = null;
+                    if (question.category) {
+                      // 백엔드 enum code를 프론트엔드 category ID로 변환
+                      const enumToCategoryId: Record<string, string> = {
+                        'DEV_IT': 'dev',
+                        'EDUCATION': 'education',
+                        'HEALTH': 'health',
+                        'COOKING': 'cooking',
+                        'TRAVEL': 'travel',
+                        'SHOPPING': 'shopping',
+                        'LIFE': 'lifestyle',
+                        'HOBBY': 'hobby',
+                        'SPORTS': 'sports',
+                        'PET': 'pet',
+                        'CAR': 'car',
+                        'FINANCE': 'finance',
+                        'REAL_ESTATE': 'realestate',
+                        'LAW': 'law',
+                        'JOB': 'career',
+                        'ETC': 'etc',
+                      };
+                      const categoryId = enumToCategoryId[question.category.code] || 'etc';
+                      categoryMatch = CATEGORIES.find((cat) => cat.id === categoryId);
+                    } else if (question.tag) {
+                      // 하위 호환성
+                      categoryMatch = CATEGORIES.find((cat) => question.tag?.includes(cat.name));
+                    }
                     return (
                       <Link
                         key={question.id}
@@ -254,9 +278,33 @@ export default function Home() {
               ) : (
                 <div className="space-y-2">
                   {latestQuestions.map((question) => {
-                    const categoryMatch = question.tag
-                      ? CATEGORIES.find((cat) => question.tag?.includes(cat.name))
-                      : null;
+                    let categoryMatch = null;
+                    if (question.category) {
+                      // 백엔드 enum code를 프론트엔드 category ID로 변환
+                      const enumToCategoryId: Record<string, string> = {
+                        'DEV_IT': 'dev',
+                        'EDUCATION': 'education',
+                        'HEALTH': 'health',
+                        'COOKING': 'cooking',
+                        'TRAVEL': 'travel',
+                        'SHOPPING': 'shopping',
+                        'LIFE': 'lifestyle',
+                        'HOBBY': 'hobby',
+                        'SPORTS': 'sports',
+                        'PET': 'pet',
+                        'CAR': 'car',
+                        'FINANCE': 'finance',
+                        'REAL_ESTATE': 'realestate',
+                        'LAW': 'law',
+                        'JOB': 'career',
+                        'ETC': 'etc',
+                      };
+                      const categoryId = enumToCategoryId[question.category.code] || 'etc';
+                      categoryMatch = CATEGORIES.find((cat) => cat.id === categoryId);
+                    } else if (question.tag) {
+                      // 하위 호환성
+                      categoryMatch = CATEGORIES.find((cat) => question.tag?.includes(cat.name));
+                    }
                     return (
                       <Link
                         key={question.id}
