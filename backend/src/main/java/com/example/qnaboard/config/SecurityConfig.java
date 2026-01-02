@@ -1,5 +1,6 @@
 package com.example.qnaboard.config;
 
+import com.example.qnaboard.security.CustomAuthenticationEntryPoint;
 import com.example.qnaboard.security.CustomUserDetailsService;
 import com.example.qnaboard.security.JwtAuthenticationFilter;
 import com.example.qnaboard.security.JwtProvider;
@@ -29,6 +30,7 @@ public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
     /**
      * SecurityFilterChain
@@ -47,6 +49,7 @@ public class SecurityConfig {
                 // 폼로그인/기본인증 끔
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint))
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**","/users/signup","/health").permitAll()

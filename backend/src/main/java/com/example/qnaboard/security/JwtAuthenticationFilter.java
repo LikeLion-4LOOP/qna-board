@@ -1,5 +1,8 @@
 package com.example.qnaboard.security;
 
+import com.example.qnaboard.exception.AuthErrorCode;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,45 +22,47 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService userDetailsService;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        log.debug("Authorization header = {}", header);
         if (header == null || !header.startsWith("Bearer ")) {
-            log.debug("No bearer token. skip");
             filterChain.doFilter(request, response);
             return;
         }
+
+        String token = header.substring(7);
+
         try {
-            if(header != null && header.startsWith("Bearer ")) {
-                String token = header.substring(7);
-                log.debug("resolved token = {}", token != null);
-                // 토큰 유효성 검사
-                if (jwtProvider.validate(token) && "access".equals(jwtProvider.getType(token))) {
+            var claims = jwtProvider.parseClaims(token);
 
-                    Long userId = jwtProvider.getUserId(token);
-                    log.debug("userId from token = {}", userId);
-
-                    UserDetails userDetails = userDetailsService.loadUserById(userId);
-
-                    // 인증 객체 생성
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
-                    );
-
-                    // SecurityContext에 저장
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    log.debug("SecurityContext authentication set: {}", authentication.isAuthenticated());
-                }
+            String typ = claims.get("typ", String.class);
+            if (!"access".equals(typ)) {
+                request.setAttribute(AuthErrorCode.class.getName(), AuthErrorCode.INVALID_TOKEN);
+                SecurityContextHolder.clearContext();
+                filterChain.doFilter(request, response);
+                return;
             }
 
-        }catch (Exception e){
-            log.debug("JWT auth failed: {}", e.getMessage(), e);
+            Long userId = Long.valueOf(claims.getSubject());
+            UserDetails userDetails = userDetailsService.loadUserById(userId);
 
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        } catch (ExpiredJwtException e) {
+            request.setAttribute(AuthErrorCode.class.getName(), AuthErrorCode.EXPIRED_TOKEN);
+            SecurityContextHolder.clearContext();
+        } catch (JwtException | IllegalArgumentException e) {
+            request.setAttribute(AuthErrorCode.class.getName(), AuthErrorCode.INVALID_TOKEN);
+            SecurityContextHolder.clearContext();
+        } catch (Exception e) {
+            request.setAttribute(AuthErrorCode.class.getName(), AuthErrorCode.UNAUTHORIZED);
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
