@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getDeviceId } from "@/lib/auth";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
@@ -68,8 +69,9 @@ apiClient.interceptors.response.use(
             return Promise.reject(error);
           }
 
-          const deviceId = localStorage.getItem("deviceId") || "web";
-          console.log("토큰 재발급 시도...");
+          // getDeviceId()를 사용하여 로그인 시와 동일한 deviceId 보장
+          const deviceId = getDeviceId();
+          console.log("토큰 재발급 시도...", { deviceId });
 
           // refresh 요청은 인터셉터를 거치지 않도록 axios 직접 사용
           const response = await axios.post(
@@ -109,7 +111,21 @@ apiClient.interceptors.response.use(
           }
         } catch (refreshError: any) {
           // 리프레시 토큰도 만료되었거나 유효하지 않은 경우 로그아웃
-          console.log("토큰 재발급 실패:", refreshError.response?.data);
+          const refreshErrorCode = refreshError.response?.data?.code;
+          console.log("토큰 재발급 실패:", {
+            errorCode: refreshErrorCode,
+            errorMessage: refreshError.response?.data?.message,
+            errorData: refreshError.response?.data,
+            deviceId: getDeviceId(),
+          });
+
+          // NOT_MATCH_DEVICE 에러인 경우 특별 처리
+          if (refreshErrorCode === "AUTH_401_4") {
+            console.error(
+              "DeviceId 불일치! 로그인 시 사용한 deviceId와 재발급 시 deviceId가 다릅니다."
+            );
+          }
+
           originalRequest._retry = false; // 재시도 플래그 초기화
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
