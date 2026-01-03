@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { questionApi, Question } from '@/api/question';
 import { answerApi, AnswerResponse } from '@/api/answer';
-import { commentApi, CommentResponse } from '@/api/comment';
 import { userApi } from '@/api/user';
 import { isAuthenticated } from '@/lib/auth';
 import AnswerList from '@/components/AnswerList';
@@ -28,7 +27,35 @@ export default function QuestionDetailPage() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [showCommentModal, setShowCommentModal] = useState(false);
-  const [liked, setLiked] = useState(false);
+
+  const loadQuestion = async () => {
+    try {
+      const data = await questionApi.getQuestion(questionId);
+      setQuestion(data);
+    } catch (err) {
+      setError('질문을 불러오는데 실패했습니다.');
+      console.error(err);
+    }
+  };
+
+  const loadAnswers = async () => {
+    try {
+      const data = await answerApi.getAnswers(questionId);
+      // 채택된 답변을 맨 위로 정렬
+      const sortedAnswers = [...data.content].sort((a, b) => {
+        const aSelected = a.isSelect ?? (a as { select?: boolean }).select ?? false;
+        const bSelected = b.isSelect ?? (b as { select?: boolean }).select ?? false;
+        if (aSelected && !bSelected) return -1;
+        if (!aSelected && bSelected) return 1;
+        return 0;
+      });
+      setAnswers(sortedAnswers);
+      setLoading(false);
+    } catch (err) {
+      console.error('답변 로딩 실패:', err);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -65,28 +92,6 @@ export default function QuestionDetailPage() {
     }
   }, [question]);
 
-  const loadQuestion = async () => {
-    try {
-      const data = await questionApi.getQuestion(questionId);
-      setQuestion(data);
-    } catch (err) {
-      setError('질문을 불러오는데 실패했습니다.');
-      console.error(err);
-    }
-  };
-
-  const loadAnswers = async () => {
-    try {
-      const data = await answerApi.getAnswers(questionId);
-      setAnswers(data.content);
-    } catch (err) {
-      console.error('답변 로딩 실패:', err);
-    }
-    if (question) {
-      setLoading(false);
-    }
-  };
-
   const handleDelete = async () => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
 
@@ -97,11 +102,6 @@ export default function QuestionDetailPage() {
       alert('삭제에 실패했습니다.');
       console.error(err);
     }
-  };
-
-  const handleLike = () => {
-    setLiked(!liked);
-    // TODO: 백엔드 API 호출
   };
 
   const handleReport = (reason: string) => {
@@ -162,7 +162,7 @@ export default function QuestionDetailPage() {
                 {question.username?.charAt(0)?.toUpperCase() || '?'}
               </div>
               <div>
-                <div className="font-semibold text-slate-900 text-sm">{question.username || '익명'}</div>
+                <div className="font-semibold text-slate-900 text-sm">{question.user?.username || question.username || '사용자'}</div>
                 <div className="text-xs text-slate-500">
                   {formatDate(question.createdAt)}
                   {question.modifiedAt && question.modifiedAt !== question.createdAt && (
@@ -253,21 +253,6 @@ export default function QuestionDetailPage() {
         <div className="mb-6 text-slate-700 whitespace-pre-wrap leading-relaxed text-lg">{question.content}</div>
 
         <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-200">
-          {authenticated && (
-            <button
-              onClick={handleLike}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                liked
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <svg className="w-5 h-5" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-              </svg>
-              좋아요
-            </button>
-          )}
           <button
             onClick={() => setShowCommentModal(true)}
             className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg font-medium transition-colors"

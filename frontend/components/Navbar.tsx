@@ -5,24 +5,45 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { isAuthenticated, clearTokens } from '@/lib/auth';
 import { authApi } from '@/api/auth';
+import { userApi, UserResponse } from '@/api/user';
 
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [authenticated, setAuthenticated] = useState(false);
+  const [user, setUser] = useState<UserResponse | null>(null);
 
   useEffect(() => {
     // 페이지 변경 시마다 인증 상태 확인
-    setAuthenticated(isAuthenticated());
+    const auth = isAuthenticated();
+    setAuthenticated(auth);
+    
+    // 인증된 경우 사용자 정보 가져오기
+    if (auth) {
+      userApi.getUser()
+        .then(setUser)
+        .catch(() => setUser(null));
+    } else {
+      setUser(null);
+    }
   }, [pathname]);
 
   // 주기적으로 인증 상태 확인 (로그인/로그아웃 후 즉시 반영)
   useEffect(() => {
     const interval = setInterval(() => {
-      setAuthenticated(isAuthenticated());
+      const auth = isAuthenticated();
+      setAuthenticated(auth);
+      
+      if (auth && !user) {
+        userApi.getUser()
+          .then(setUser)
+          .catch(() => setUser(null));
+      } else if (!auth) {
+        setUser(null);
+      }
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -57,24 +78,25 @@ export default function Navbar() {
               >
                 질문 작성
               </Link>
-              {authenticated && (
-                <Link
-                  href="/users/profile"
-                  className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                >
-                  내 프로필
-                </Link>
-              )}
             </div>
           </div>
           <div className="flex items-center space-x-3">
             {authenticated ? (
-              <button
-                onClick={handleLogout}
-                className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                로그아웃
-              </button>
+              <>
+                <Link
+                  href="/users/profile"
+                  className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-sm hover:from-indigo-500 hover:to-purple-500 transition-all shadow-md hover:shadow-lg"
+                  title="내 프로필"
+                >
+                  {user?.username?.charAt(0)?.toUpperCase() || '?'}
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  로그아웃
+                </button>
+              </>
             ) : (
               <>
                 <Link

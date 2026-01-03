@@ -1,28 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { commentApi, CommentResponse } from '@/api/comment';
-import { userApi } from '@/api/user';
 import ReportModal from './ReportModal';
 
 interface CommentItemProps {
   comment: CommentResponse;
   onUpdate: () => void;
   authenticated: boolean;
+  currentUserId: number | null;
 }
 
-export default function CommentItem({ comment, onUpdate, authenticated }: CommentItemProps) {
+export default function CommentItem({ comment, onUpdate, authenticated, currentUserId }: CommentItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [loading, setLoading] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
-
-  useEffect(() => {
-    if (authenticated) {
-      userApi.getUser().then((user) => setCurrentUserId(user.id)).catch(() => {});
-    }
-  }, [authenticated]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -55,7 +48,7 @@ export default function CommentItem({ comment, onUpdate, authenticated }: Commen
     }
   };
 
-  const canEdit = authenticated && currentUserId === comment.user.id;
+  const canEdit = authenticated && currentUserId !== null && currentUserId === comment.user.id;
 
   const handleReport = (reason: string) => {
     // TODO: 백엔드 API 호출
@@ -94,8 +87,14 @@ export default function CommentItem({ comment, onUpdate, authenticated }: Commen
       ) : (
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <div className="text-slate-700 mb-2">{comment.content}</div>
-            <div className="text-xs text-slate-400">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                {comment.user?.username?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+              <span className="font-semibold text-slate-900">{comment.user?.username || '사용자'}</span>
+            </div>
+            <div className="text-slate-700 mb-2 ml-10">{comment.content}</div>
+            <div className="text-xs text-slate-400 ml-10">
               {formatDate(comment.createdAt)}
             </div>
           </div>

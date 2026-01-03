@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { commentApi, CommentResponse } from '@/api/comment';
 import { isAuthenticated } from '@/lib/auth';
+import { userApi } from '@/api/user';
 import CommentItem from './CommentItem';
 
 interface CommentModalProps {
@@ -19,10 +20,19 @@ export default function CommentModal({ isOpen, onClose, postId, isQuestion, titl
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [auth, setAuth] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen) {
-      setAuth(isAuthenticated());
+      const authStatus = isAuthenticated();
+      setAuth(authStatus);
+      if (authStatus) {
+        userApi.getUser()
+          .then((user) => setCurrentUserId(user.id))
+          .catch(() => setCurrentUserId(null));
+      } else {
+        setCurrentUserId(null);
+      }
       loadComments();
     }
   }, [isOpen, postId, isQuestion]);
@@ -135,6 +145,7 @@ export default function CommentModal({ isOpen, onClose, postId, isQuestion, titl
                   comment={comment}
                   onUpdate={loadComments}
                   authenticated={auth}
+                  currentUserId={currentUserId}
                 />
               ))}
             </div>

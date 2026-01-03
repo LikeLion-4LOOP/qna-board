@@ -46,16 +46,23 @@ public class CommentService {
                 isQuestion,
                 postId
         );
+
         Comment save = commentRepository.save(comment);
+
         CommentCreateResponse commentCreateResponse = new CommentCreateResponse(
                 save.getId(),
                 save.getPostId(),
                 save.isQuestion(),
                 save.getContent(),
                 save.getCreatedAt(),
-                new CommentCreateResponse.UserResponse(save.getUser().getId())
+                new CommentCreateResponse.UserResponse(
+                        user.getId(),
+                        user.getUsername()
+                )
         );
+
         userPointService.rewardForPostComment(userId);
+
         return commentCreateResponse;
     }
 
@@ -76,7 +83,8 @@ public class CommentService {
                         comment.getContent(),
                         comment.getCreatedAt(),
                         new CommentResponse.UserResponse(
-                                comment.getId()
+                                comment.getUser().getId(),
+                                comment.getUser().getUsername()
                         )
                 ));
     }

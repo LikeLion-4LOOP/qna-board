@@ -8,6 +8,7 @@ export interface CommentResponse {
   createdAt: string;
   user: {
     id: number;
+    username: string;
   };
 }
 

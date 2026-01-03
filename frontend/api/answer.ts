@@ -6,10 +6,23 @@ export interface AnswerResponse {
   content: string;
   userId: number;
   vote: number;
-  isSelect: boolean;
+  isSelect?: boolean;
+  select?: boolean; // 백엔드에서 select로 올 수 있음
   createdAt: string;
   updatedAt: string;
+  user?: {
+    id: number;
+    username: string;
+  };
 }
+
+// 백엔드 응답을 정규화하는 헬퍼 함수
+export const normalizeAnswer = (answer: any): AnswerResponse => {
+  return {
+    ...answer,
+    isSelect: answer.isSelect ?? answer.select ?? false,
+  };
+};
 
 export interface AnswerCreateRequest {
   content: string;
@@ -33,13 +46,17 @@ export const answerApi = {
     page: number = 0,
     size: number = 10
   ): Promise<PageResponse<AnswerResponse>> => {
-    const response = await apiClient.get<PageResponse<AnswerResponse>>(
+    const response = await apiClient.get<PageResponse<any>>(
       `/api/questions/${questionId}/answers`,
       {
         params: { page, size },
       }
     );
-    return response.data;
+    // 응답 데이터 정규화
+    return {
+      ...response.data,
+      content: response.data.content.map(normalizeAnswer),
+    };
   },
 
   createAnswer: async (

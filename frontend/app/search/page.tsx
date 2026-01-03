@@ -23,7 +23,8 @@ function SearchContent() {
   const loadSearchResults = async () => {
     try {
       setLoading(true);
-      const data = await questionApi.getQuestions(query);
+      // 백엔드에서 검색 처리
+      const data = await questionApi.getQuestions(query, 'latest');
       setQuestions(data);
     } catch (err) {
       setError('검색 결과를 불러오는데 실패했습니다.');
@@ -129,7 +130,7 @@ function SearchContent() {
                   <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full flex items-center justify-center text-white text-xs font-bold">
                     {question.username?.charAt(0)?.toUpperCase() || '?'}
                   </div>
-                  <span className="text-sm text-slate-600 font-medium">{question.username || '익명'}</span>
+                  <span className="text-sm text-slate-600 font-medium">{question.user?.username || question.username || '사용자'}</span>
                 </div>
                 <span className="text-xs text-slate-400">
                   {new Date(question.createdAt).toLocaleString('ko-KR')}
