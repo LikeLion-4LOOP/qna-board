@@ -22,6 +22,7 @@ public class AnswerResponseDto {
     private int viewCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private UserInfo user;
 
 
     // Entity → DTO 변환 메서드 추가
@@ -36,7 +37,15 @@ public class AnswerResponseDto {
                 .isSelect(answer.isSelect())
                 .createdAt(answer.getCreatedAt())
                 .updatedAt(answer.getUpdatedAt())
+                .user(new UserInfo(answer.getUser().getId(), answer.getUser().getUsername()))
                 .build();
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class UserInfo {
+        private Long id;
+        private String username;
     }
 }
 // 필요한 정보만 클라이언트에 전달
