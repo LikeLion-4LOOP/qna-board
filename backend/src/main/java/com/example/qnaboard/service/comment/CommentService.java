@@ -83,7 +83,8 @@ public class CommentService {
                         comment.getContent(),
                         comment.getCreatedAt(),
                         new CommentResponse.UserResponse(
-                                comment.getId()
+                                comment.getUser().getId(),
+                                comment.getUser().getUsername()
                         )
                 ));
     }

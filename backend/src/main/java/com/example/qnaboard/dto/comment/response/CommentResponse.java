@@ -13,6 +13,7 @@ public record CommentResponse(
         UserResponse user
 ) {
     public record UserResponse(
-            Long id
+            Long id,
+            String username
     ) {}
 }

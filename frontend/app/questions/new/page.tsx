@@ -14,7 +14,6 @@ export default function NewQuestionPage() {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    tag: '',
     category: '' as CategoryId | '',
   });
   const [loading, setLoading] = useState(false);
@@ -172,21 +171,6 @@ export default function NewQuestionPage() {
               </div>
             </div>
           )}
-        </div>
-
-        <div className="mb-6">
-          <label htmlFor="tag" className="block text-sm font-semibold text-slate-700 mb-2">
-            추가 태그 (선택사항)
-          </label>
-          <input
-            id="tag"
-            type="text"
-            value={formData.tag}
-            onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
-            className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
-            placeholder="예: JPA, Hibernate, Redux 등 세부 태그"
-          />
-          <p className="mt-2 text-xs text-slate-500">카테고리 외에 추가로 태그를 입력할 수 있습니다</p>
         </div>
 
         <div className="mb-6">

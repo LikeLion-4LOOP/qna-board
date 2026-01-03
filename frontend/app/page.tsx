@@ -328,7 +328,7 @@ export default function Home() {
                             <div className="w-4 h-4 bg-slate-300 rounded-full flex items-center justify-center text-white text-xs font-bold">
                               {question.username?.charAt(0)?.toUpperCase() || '?'}
                             </div>
-                            {question.username || '익명'}
+                            {question.user?.username || question.username || '사용자'}
                           </span>
                           <span className="text-xs">{new Date(question.createdAt).toLocaleString('ko-KR')}</span>
                         </div>

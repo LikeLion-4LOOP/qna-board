@@ -81,9 +81,12 @@ export default function AnswerItem({
     };
 
     const handleSelect = async () => {
+        if (!confirm('이 답변을 채택하시겠습니까?')) return;
+        
         try {
             await answerApi.selectAnswer(answer.id);
-            onUpdate();
+            alert('답변이 채택되었습니다!');
+            onUpdate(); // 답변 목록 다시 로드
         } catch (err: unknown) {
             const apiErr = getApiError(err);
             alert(apiErr?.response?.data?.message || '답변 채택에 실패했습니다.');
@@ -155,26 +158,29 @@ export default function AnswerItem({
     // UX: 자기 답변이면 채택 버튼 숨김
     const isSelfAnswer = authenticated && currentUserId !== null && currentUserId === answer.userId;
 
+    // answer.isSelect 또는 answer.select 확인
+    const isSelected = answer.isSelect ?? (answer as { select?: boolean }).select ?? false;
+    
     // 질문 작성자만 채택 가능 + 이미 채택된 답변이 없어야 함 + 자기 답변은 불가
     const canSelect =
-        !answer.isSelect &&
+        !isSelected &&
         !hasSelectedAnswer &&
         authenticated &&
         currentUserId !== null &&
         questionUserId !== null &&
         currentUserId === questionUserId &&
         !isSelfAnswer;
-
+    
     return (
         <div
-            className={`bg-white rounded-2xl shadow-lg border p-6 transition-all duration-300 animate-fade-in ${
-                answer.isSelect
-                    ? 'border-green-400 bg-gradient-to-br from-green-50 to-emerald-50 shadow-green-200/50'
+            className={`bg-white rounded-2xl shadow-lg border-2 p-6 transition-all duration-300 animate-fade-in ${
+                isSelected
+                    ? 'border-green-500'
                     : 'border-slate-200 hover:shadow-xl hover:border-indigo-300'
             }`}
         >
-            {answer.isSelect && (
-                <div className="mb-4 flex items-center gap-2 text-green-700 font-bold bg-green-100 px-4 py-2 rounded-xl">
+            {isSelected && (
+                <div className="mb-4 flex items-center gap-2 text-green-700 font-bold bg-green-100 px-4 py-2 rounded-xl border border-green-300">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                             strokeLinecap="round"
@@ -221,6 +227,12 @@ export default function AnswerItem({
                     </div>
 
                     <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-200">
+                        <div className="flex items-center gap-3 mr-auto">
+                            <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                {answer.user?.username?.charAt(0)?.toUpperCase() || '?'}
+                            </div>
+                            <span className="text-sm text-slate-600 font-medium">{answer.user?.username || '사용자'}</span>
+                        </div>
                         <div className="flex items-center gap-2 text-slate-600">
                             <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path

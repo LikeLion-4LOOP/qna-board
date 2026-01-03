@@ -15,7 +15,10 @@ interface AnswerListProps {
 
 // 채택된 답변이 있는지 확인하는 함수
 const hasSelectedAnswer = (answers: AnswerResponse[]): boolean => {
-  return answers.some(answer => answer.isSelect);
+  return answers.some(answer => {
+    const isSelected = answer.isSelect ?? (answer as { select?: boolean }).select ?? false;
+    return isSelected;
+  });
 };
 
 export default function AnswerList({ questionId, answers, onUpdate, authenticated, questionUserId, currentUserId }: AnswerListProps) {
@@ -58,9 +61,12 @@ export default function AnswerList({ questionId, answers, onUpdate, authenticate
 
   const [showAnswerForm, setShowAnswerForm] = useState(false);
 
+  // 질문 작성자는 답변을 작성할 수 없음
+  const canWriteAnswer = authenticated && currentUserId !== null && questionUserId !== null && currentUserId !== questionUserId;
+
   return (
     <div>
-      {authenticated && (
+      {canWriteAnswer && (
         <div className="mb-6">
           {!showAnswerForm ? (
             <button

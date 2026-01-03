@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { commentApi, CommentResponse } from '@/api/comment';
 import { isAuthenticated } from '@/lib/auth';
+import { userApi } from '@/api/user';
 import CommentItem from './CommentItem';
 
 interface CommentListProps {
@@ -16,9 +17,18 @@ export default function CommentList({ postId, isQuestion }: CommentListProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [auth, setAuth] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
-    setAuth(isAuthenticated());
+    const authStatus = isAuthenticated();
+    setAuth(authStatus);
+    if (authStatus) {
+      userApi.getUser()
+        .then((user) => setCurrentUserId(user.id))
+        .catch(() => setCurrentUserId(null));
+    } else {
+      setCurrentUserId(null);
+    }
     loadComments();
   }, [postId, isQuestion]);
 
@@ -107,12 +117,13 @@ export default function CommentList({ postId, isQuestion }: CommentListProps) {
           </div>
         ) : (
           comments.map((comment) => (
-            <CommentItem
-              key={comment.commentId}
-              comment={comment}
-              onUpdate={loadComments}
-              authenticated={auth}
-            />
+              <CommentItem
+                  key={comment.commentId}
+                  comment={comment}
+                  onUpdate={loadComments}
+                  authenticated={auth}
+                  currentUserId={currentUserId}
+              />
           ))
         )}
       </div>

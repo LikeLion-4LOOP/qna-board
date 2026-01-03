@@ -21,70 +21,33 @@ export default function QuestionsPage() {
 
   useEffect(() => {
     loadQuestions();
-  }, []);
-
-  useEffect(() => {
-    filterAndSortQuestions();
-  }, [questions, searchQuery, sortBy, selectedTag, selectedCategory]);
+  }, [searchQuery, sortBy]);
 
   const loadQuestions = async () => {
     try {
       setLoading(true);
-      const data = await questionApi.getQuestions();
+      // 백엔드에서 검색과 정렬 처리
+      const data = await questionApi.getQuestions(searchQuery || undefined, sortBy);
       setQuestions(data);
+      
+      // 프론트엔드에서 카테고리 필터만 처리
+      let filtered = [...data];
+      if (selectedCategory) {
+        const categoryName = getCategoryById(selectedCategory).name;
+        filtered = filtered.filter((q) => {
+          if (q.category) {
+            return q.category.displayName === categoryName;
+          }
+          return false;
+        });
+      }
+      setFilteredQuestions(filtered);
     } catch (err) {
       setError('질문 목록을 불러오는데 실패했습니다.');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
-
-  const filterAndSortQuestions = () => {
-    let filtered = [...questions];
-
-    // 검색 필터
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (q) =>
-          q.title.toLowerCase().includes(query) ||
-          q.content.toLowerCase().includes(query) ||
-          (q.tag && q.tag.toLowerCase().includes(query))
-      );
-    }
-
-    // 카테고리 필터
-    if (selectedCategory) {
-      const categoryName = getCategoryById(selectedCategory).name;
-      filtered = filtered.filter((q) => {
-        if (q.category) {
-          return q.category.displayName === categoryName;
-        }
-        // 하위 호환성: tag가 있는 경우
-        return q.tag && q.tag.includes(categoryName);
-      });
-    }
-
-    // 태그 필터 (하위 호환성)
-    if (selectedTag && !selectedCategory) {
-      filtered = filtered.filter((q) => q.tag === selectedTag);
-    }
-
-    // 정렬
-    switch (sortBy) {
-      case 'latest':
-        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        break;
-      case 'popular':
-        filtered.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
-        break;
-      case 'answers':
-        filtered.sort((a, b) => (b.answerCount || 0) - (a.answerCount || 0));
-        break;
-    }
-
-    setFilteredQuestions(filtered);
   };
 
   const allTags = Array.from(new Set(questions.map((q) => q.tag).filter((tag): tag is string => !!tag)));
@@ -333,7 +296,7 @@ export default function QuestionsPage() {
                     <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full flex items-center justify-center text-white text-xs font-bold">
                       {question.username?.charAt(0)?.toUpperCase() || '?'}
                     </div>
-                    <span className="text-sm text-slate-600 font-medium">{question.username || '익명'}</span>
+                    <span className="text-sm text-slate-600 font-medium">{question.user?.username || question.username || '사용자'}</span>
                   </div>
                   <div className="flex items-center gap-4 text-xs text-slate-500">
                     {question.answerCount !== undefined && (
