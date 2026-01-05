@@ -75,7 +75,7 @@ public class CommentService {
             Pageable pageable
     ) {
         return commentRepository
-                .findByPostIdAndQuestion(postId, isQuestion, pageable)
+                .findByPostIdAndQuestionAndIsHiddenFalse(postId, isQuestion, pageable) // 수정
                 .map(comment -> new CommentResponse(
                         comment.getId(),
                         comment.getPostId(),
@@ -96,7 +96,7 @@ public class CommentService {
             Long userId,
             Pageable pageable
     ) {
-        return commentRepository.findByUser_Id(userId, pageable)
+        return commentRepository.findByUser_IdAndIsHiddenFalse(userId, pageable) // 수정
                 .map(comment -> new MyCommentSummaryResponse(
                         comment.getId(),
                         comment.getContent(),

@@ -33,6 +33,13 @@ public class Question {
     @Column(nullable = false)
     private int viewCount = 0;
 
+    @Column(nullable = false)
+    private boolean isHidden = false;
+
+    public void hide() {
+        this.isHidden = true;
+    }
+
     // 정렬용 필드
     @Column(nullable = false)
     private int commentCount = 0; // 답변 개수

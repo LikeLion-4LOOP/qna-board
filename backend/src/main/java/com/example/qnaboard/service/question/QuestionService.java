@@ -61,7 +61,7 @@ public class QuestionService {
      */
     @Transactional(readOnly = true)
     public Page<QuestionResponse> getQuestionList(Pageable pageable) {
-        return questionRepository.findAll(pageable)
+        return questionRepository.findAllByIsHiddenFalse(pageable)
                 .map(this::toResponse);
     }
 
@@ -71,7 +71,7 @@ public class QuestionService {
     @Transactional
     public QuestionResponse getQuestionDetail(Long questionId) {
 
-        Question question = questionRepository.findById(questionId)
+        Question question = questionRepository.findByIdAndIsHiddenFalse(questionId)
                 .orElseThrow(() -> new BusinessException(QuestionErrorCode.QUESTION_NOT_FOUND));
 
         //조회수 증가
@@ -122,7 +122,7 @@ public class QuestionService {
      */
     @Transactional(readOnly = true)
     public Page<MyQuestionSummaryResponse> getMyQuestions(Long userId, Pageable pageable) {
-        return questionRepository.findByUser_Id(userId, pageable)
+        return questionRepository.findByUser_IdAndIsHiddenFalse(userId, pageable)
                 .map(question -> new MyQuestionSummaryResponse(
                         question.getId(),
                         question.getTitle(),
@@ -134,7 +134,7 @@ public class QuestionService {
      *  Question → QuestionResponse 공통 변환
      */
     private QuestionResponse toResponse(Question question) {
-        int answerCount = answerRepository.countByQuestion_Id(question.getId());
+        int answerCount = answerRepository.countByQuestion_IdAndIsHiddenFalse(question.getId());
         return new QuestionResponse(
                 question.getId(),
                 question.getTitle(),
@@ -167,16 +167,17 @@ public class QuestionService {
     @Transactional(readOnly = true)
     public Page<QuestionResponse> getQuestionList(String keyword, Pageable pageable) {
         Page<Question> questions;
-        if (keyword != null && !keyword.isBlank()) {    // keyword가 비어있지 않으면 검색, 비어있으면 전체 조회
-            questions = questionRepository.findByTitleContainingOrContentContaining(keyword, keyword, pageable);
+        if (keyword != null && !keyword.isBlank()) {
+            questions = questionRepository
+                    .findByIsHiddenFalseAndTitleContainingOrIsHiddenFalseAndContentContaining(keyword, keyword, pageable);
         } else {
-            questions = questionRepository.findAll(pageable);
+            questions = questionRepository.findAllByIsHiddenFalse(pageable);
         }
         return questions.map(this::convertToQuestionResponse);
     }
 
     private QuestionResponse convertToQuestionResponse(Question question) {
-        int answerCount = answerRepository.countByQuestion_Id(question.getId());
+        int answerCount = answerRepository.countByQuestion_IdAndIsHiddenFalse(question.getId());
         return new QuestionResponse(
                 question.getId(),
                 question.getTitle(),
