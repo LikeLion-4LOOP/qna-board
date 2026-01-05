@@ -13,7 +13,6 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
 
   backend:
     env_file:
@@ -37,7 +36,6 @@ services:
     restart: unless-stopped
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
 
   frontend:
     build:
@@ -55,7 +53,6 @@ services:
       TZ: Asia/Seoul
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
 
 volumes:
   mysql_data:
