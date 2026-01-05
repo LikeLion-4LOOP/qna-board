@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface ProfileImageRepository extends JpaRepository<ProfileImage, Long> {
-    Optional<ProfileImage> findByUserId(Long userId);
-}   // 하나의 프로필 가져와야 하니까 Optional
+    Optional<ProfileImage> findByUser_Id(Long userId);
+}

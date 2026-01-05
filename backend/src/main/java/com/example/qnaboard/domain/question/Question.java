@@ -35,9 +35,20 @@ public class Question {
 
     // 정렬용 필드
     @Column(nullable = false)
-    private int commentCount = 0; // 답변 개수
-    public void updateCommentCount(int count) {
-        this.commentCount = count;
+    private int answerCount = 0; // 답변 개수
+    
+    public void updateAnswerCount(int count) {
+        this.answerCount = count;
+    }
+    
+    public void incrementAnswerCount() {
+        this.answerCount++;
+    }
+    
+    public void decrementAnswerCount() {
+        if (this.answerCount > 0) {
+            this.answerCount--;
+        }
     }
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -56,6 +67,7 @@ public class Question {
         this.user = user;
         this.category = category;
         this.viewCount = 0;
+        this.answerCount = 0;
     }
 
     public void addViewCount() {

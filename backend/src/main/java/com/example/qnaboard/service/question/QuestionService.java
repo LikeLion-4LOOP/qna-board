@@ -1,6 +1,7 @@
 package com.example.qnaboard.service.question;
 
 import com.example.qnaboard.domain.question.Question;
+import com.example.qnaboard.domain.question.QuestionCategory;
 import com.example.qnaboard.domain.user.User;
 import com.example.qnaboard.dto.question.request.QuestionCreateRequest;
 import com.example.qnaboard.dto.question.request.QuestionUpdateRequest;
@@ -134,13 +135,12 @@ public class QuestionService {
      *  Question → QuestionResponse 공통 변환
      */
     private QuestionResponse toResponse(Question question) {
-        int answerCount = answerRepository.countByQuestion_Id(question.getId());
         return new QuestionResponse(
                 question.getId(),
                 question.getTitle(),
                 question.getContent(),
                 question.getViewCount(),
-                answerCount,
+                question.getAnswerCount(),
                 new QuestionResponse.CategoryResponse(
                         question.getCategory().name(),
                         question.getCategory().getDisplayName()
@@ -163,26 +163,46 @@ public class QuestionService {
         }
     }
 
-    // 질문 목록 검색 기능 new !
+    // 질문 목록 검색 기능 (검색, 카테고리 필터 지원)
     @Transactional(readOnly = true)
-    public Page<QuestionResponse> getQuestionList(String keyword, Pageable pageable) {
+    public Page<QuestionResponse> getQuestionList(String keyword, String category, Pageable pageable) {
         Page<Question> questions;
-        if (keyword != null && !keyword.isBlank()) {    // keyword가 비어있지 않으면 검색, 비어있으면 전체 조회
-            questions = questionRepository.findByTitleContainingOrContentContaining(keyword, keyword, pageable);
+        QuestionCategory questionCategory = null;
+        
+        // 카테고리 파라미터 파싱
+        if (category != null && !category.isBlank()) {
+            try {
+                questionCategory = QuestionCategory.valueOf(category.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // 잘못된 카테고리 값은 무시
+            }
+        }
+        
+        // 검색 키워드와 카테고리 조합
+        if (keyword != null && !keyword.isBlank()) {
+            if (questionCategory != null) {
+                questions = questionRepository.findByCategoryAndTitleContainingOrCategoryAndContentContaining(
+                        questionCategory, keyword, questionCategory, keyword, pageable);
+            } else {
+                questions = questionRepository.findByTitleContainingOrContentContaining(keyword, keyword, pageable);
+            }
         } else {
-            questions = questionRepository.findAll(pageable);
+            if (questionCategory != null) {
+                questions = questionRepository.findByCategory(questionCategory, pageable);
+            } else {
+                questions = questionRepository.findAll(pageable);
+            }
         }
         return questions.map(this::convertToQuestionResponse);
     }
 
     private QuestionResponse convertToQuestionResponse(Question question) {
-        int answerCount = answerRepository.countByQuestion_Id(question.getId());
         return new QuestionResponse(
                 question.getId(),
                 question.getTitle(),
                 question.getContent(),
                 question.getViewCount(),
-                answerCount,
+                question.getAnswerCount(),
                 new QuestionResponse.CategoryResponse(question.getCategory().name(),question.getCategory().getDisplayName()),
                 question.getCreatedAt(),
                 question.getUpdatedAt(),

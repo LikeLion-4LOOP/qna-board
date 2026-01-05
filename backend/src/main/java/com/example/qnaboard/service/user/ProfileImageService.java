@@ -7,31 +7,33 @@ import com.example.qnaboard.exception.ProfileErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.user.ProfileImageRepository;
 import com.example.qnaboard.repository.user.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
 
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class ProfileImageService {
+
     private final UserRepository userRepository;
     private final ProfileImageRepository profileImageRepository;
 
     public void upload(Long userId, MultipartFile file) {
-        // 1. 유저 확인
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ProfileErrorCode.USER_NOT_FOUND));
 
-        // 2. 파일 유효성 검사
         validateFile(file);
 
-        // 3. 기존 프로필 이미지가 있다면 삭제
-        profileImageRepository.findByUserId(userId)
-                .ifPresent(image -> profileImageRepository.delete(image));
+        profileImageRepository.findByUser_Id(userId)
+                .ifPresent(img -> {
+                    profileImageRepository.delete(img);
+                    profileImageRepository.flush();
+                });
+
 
         try {
             ProfileImage profileImage = new ProfileImage(
@@ -47,10 +49,9 @@ public class ProfileImageService {
         }
     }
 
-    // 프로필 이미지 조회
-    @Transactional
+    @Transactional(readOnly = true)
     public ProfileImageBinaryResponse download(Long userId) {
-        ProfileImage img = profileImageRepository.findByUserId(userId)
+        ProfileImage img = profileImageRepository.findByUser_Id(userId)
                 .orElseThrow(() -> new BusinessException(ProfileErrorCode.PROFILE_IMAGE_NOT_FOUND));
 
         return new ProfileImageBinaryResponse(
@@ -64,10 +65,11 @@ public class ProfileImageService {
         if (file == null || file.isEmpty()) {
             throw new BusinessException(ProfileErrorCode.IMAGE_EMPTY);
         }
-        if (!file.getContentType().startsWith("image/")) {
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
             throw new BusinessException(ProfileErrorCode.INVALID_IMAGE_TYPE);
         }
-        // 용량 제한 (5MB)
+
         if (file.getSize() > 5 * 1024 * 1024) {
             throw new BusinessException(ProfileErrorCode.IMAGE_TOO_LARGE);
         }

@@ -63,11 +63,13 @@ export const mapCategoryIdToEnum = (categoryId: string): string => {
 export const questionApi = {
   getQuestions: async (
     search?: string,
-    sortBy?: string
+    sortBy?: string,
+    category?: string
   ): Promise<Question[]> => {
     const params: Record<string, string> = {};
     if (search) params.search = search;
     if (sortBy) params.sortBy = sortBy;
+    if (category) params.category = category;
     const response = await apiClient.get<unknown>("/api/questions", { params }); // any->unknown으로 변경
     // Spring Data Page 객체인 경우 content 필드에서 배열 추출
     if (

@@ -35,6 +35,8 @@ export default function ProfilePage() {
   const [pointHistoryLoading, setPointHistoryLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -43,6 +45,22 @@ export default function ProfilePage() {
     }
     loadData();
   }, [router]);
+
+  const loadProfileImage = async () => {
+    if (!user) return;
+    try {
+      // 프로필 이미지 URL 설정 (이미지가 없으면 null)
+      const imageUrl = userApi.getProfileImageUrl(user.id);
+      // 이미지 존재 여부 확인을 위해 fetch 시도
+      const response = await fetch(imageUrl);
+      if (response.ok) {
+        setProfileImageUrl(imageUrl);
+      }
+    } catch (err) {
+      // 이미지가 없거나 로드 실패 시 무시
+      console.log("프로필 이미지 없음");
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -59,11 +77,83 @@ export default function ProfilePage() {
       setMyQuestions(questionsData.content);
       setMyAnswers(answersData.content);
       setMyComments(commentsData.content);
+
+      // 프로필 이미지 로드
+      loadProfileImageForUser(userData.id);
     } catch (err) {
       setError("정보를 불러오는데 실패했습니다.");
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadProfileImageForUser = async (
+    userId: number,
+    forceRefresh = false
+  ) => {
+    try {
+      // 캐시 무효화를 위해 타임스탬프 추가
+      const imageUrl = userApi.getProfileImageUrl(userId);
+      const urlWithTimestamp = forceRefresh
+        ? `${imageUrl}?t=${Date.now()}`
+        : imageUrl;
+
+      const response = await fetch(urlWithTimestamp, {
+        cache: forceRefresh ? "no-cache" : "default",
+      });
+      if (response.ok) {
+        // 타임스탬프를 포함한 URL로 설정하여 캐시 무효화
+        setProfileImageUrl(forceRefresh ? urlWithTimestamp : imageUrl);
+      } else {
+        setProfileImageUrl(null);
+      }
+    } catch (err) {
+      setProfileImageUrl(null);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 파일 유효성 검사
+    if (!file.type.startsWith("image/")) {
+      alert("이미지 파일만 업로드 가능합니다.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("파일 크기는 5MB 이하여야 합니다.");
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      await userApi.uploadProfileImage(file);
+
+      // 이미지 업로드 후 즉시 반영 (캐시 무효화)
+      if (user) {
+        await loadProfileImageForUser(user.id, true);
+        // Navbar 업데이트를 위한 이벤트 발생
+        window.dispatchEvent(
+          new CustomEvent("profileImageUpdated", {
+            detail: { userId: user.id },
+          })
+        );
+      }
+      alert("프로필 이미지가 업로드되었습니다.");
+    } catch (err: any) {
+      console.error("프로필 이미지 업로드 실패:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "프로필 이미지 업로드에 실패했습니다.";
+      alert(`프로필 이미지 업로드 실패: ${errorMessage}`);
+    } finally {
+      setUploadingImage(false);
+      // 파일 입력 초기화
+      e.target.value = "";
     }
   };
 
@@ -179,8 +269,51 @@ export default function ProfilePage() {
 
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 mb-8 animate-fade-in">
         <div className="flex items-center gap-6 mb-6">
-          <div className="w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-            {user.username.charAt(0).toUpperCase()}
+          <div className="relative">
+            {profileImageUrl ? (
+              <img
+                src={profileImageUrl}
+                alt={user.username}
+                className="w-20 h-20 rounded-2xl object-cover shadow-lg"
+              />
+            ) : (
+              <div className="w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                {user.username.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <label
+              htmlFor="profile-image-upload"
+              className="absolute bottom-0 right-0 w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-sm cursor-pointer hover:bg-indigo-700 shadow-lg transition-colors"
+              title="프로필 이미지 변경"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+            </label>
+            <input
+              id="profile-image-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={uploadingImage}
+              className="hidden"
+            />
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-slate-900 mb-1">

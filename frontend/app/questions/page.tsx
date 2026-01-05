@@ -27,30 +27,24 @@ function QuestionsPageContent() {
 
   useEffect(() => {
     loadQuestions();
-  }, [searchQuery, sortBy]);
+  }, [searchQuery, sortBy, selectedCategory]);
 
   const loadQuestions = async () => {
     try {
       setLoading(true);
-      // 백엔드에서 검색과 정렬 처리
+      // 카테고리를 백엔드 enum으로 변환
+      const categoryEnum = selectedCategory
+        ? questionApi.mapCategoryIdToEnum(selectedCategory)
+        : undefined;
+
+      // 백엔드에서 검색, 정렬, 카테고리 필터 처리
       const data = await questionApi.getQuestions(
         searchQuery || undefined,
-        sortBy
+        sortBy,
+        categoryEnum
       );
       setQuestions(data);
-
-      // 프론트엔드에서 카테고리 필터만 처리
-      let filtered = [...data];
-      if (selectedCategory) {
-        const categoryName = getCategoryById(selectedCategory).name;
-        filtered = filtered.filter((q) => {
-          if (q.category) {
-            return q.category.displayName === categoryName;
-          }
-          return false;
-        });
-      }
-      setFilteredQuestions(filtered);
+      setFilteredQuestions(data);
     } catch (err) {
       setError("질문 목록을 불러오는데 실패했습니다.");
       console.error(err);

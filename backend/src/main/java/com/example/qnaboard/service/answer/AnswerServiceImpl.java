@@ -53,6 +53,9 @@ public class AnswerServiceImpl implements AnswerService {
 
         Answer answer = new Answer(requestDto.getContent(), question, user);
         userPointService.rewardForPostAnswer(userId);
+        
+        // Question의 answerCount 증가
+        question.incrementAnswerCount();
 
         return AnswerResponseDto.from(answerRepository.save(answer));
     }
@@ -80,6 +83,11 @@ public class AnswerServiceImpl implements AnswerService {
         if (answer.isSelect()) {
             throw new BusinessException(AnswerErrorCode.ANSWER_SELECTED_CANNOT_DELETE);
         }
+        
+        // Question의 answerCount 감소
+        Question question = answer.getQuestion();
+        question.decrementAnswerCount();
+        
         userPointService.cancelRewardForAnswer(userId);
         answerRepository.delete(answer);
     }
