@@ -13,7 +13,7 @@ import com.example.qnaboard.exception.UserErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.comment.CommentRepository;
 import com.example.qnaboard.repository.user.UserRepository;
-import com.example.qnaboard.service.user.UserPointService;
+import com.example.qnaboard.service.point.UserPointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
