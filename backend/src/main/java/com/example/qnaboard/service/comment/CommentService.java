@@ -138,6 +138,7 @@ public class CommentService {
                 );
 
         validateOwner(comment, userId); //본인 댓글만 삭제 가능
+        userPointService.cancelRewardForComment(userId);
 
         commentRepository.delete(comment);
     }

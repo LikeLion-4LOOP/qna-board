@@ -113,6 +113,7 @@ public class QuestionService {
                 .orElseThrow(() -> new BusinessException(QuestionErrorCode.QUESTION_NOT_FOUND));
 
         validateOwner(question, userId);
+        userPointService.cancelRewardForQuestion(userId);
         questionRepository.delete(question);
     }
 

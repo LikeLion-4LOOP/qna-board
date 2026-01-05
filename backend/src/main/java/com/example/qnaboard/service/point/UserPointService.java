@@ -28,8 +28,11 @@ public class UserPointService {
 
     private static final int LOGIN_DAILY_REWARD = 5;
     private static final int QUESTION_REWARD = 10;
+    private static final int QUESTION_DELETE = -10;
     private static final int ANSWER_REWARD = 10;
+    private static final int ANSWER_DELETE = -10;
     private static final int COMMENT_REWARD = 1;
+    private static final int COMMENT_DELETE = -1;
     private static final int VOTE_REWARD = 1;
     private static final int VOTE_CANCEL = -1;
     private static final int SELECTED_ANSWER_REWARD = 50;
@@ -57,15 +60,27 @@ public class UserPointService {
     public void rewardForPostQuestion(Long userId) {
         apply(userId, PointType.POST_QUESTION, QUESTION_REWARD);
     }
+    @Transactional
+    public void cancelRewardForQuestion(Long userId){
+        apply(userId, PointType.DELETE_QUESTION, QUESTION_DELETE);
+    }
 
     @Transactional
     public void rewardForPostAnswer(Long userId) {
         apply(userId, PointType.POST_ANSWER, ANSWER_REWARD);
     }
+    @Transactional
+    public void cancelRewardForAnswer(Long userId){
+        apply(userId, PointType.DELETE_ANSWER, ANSWER_DELETE);
+    }
 
     @Transactional
     public void rewardForPostComment(Long userId) {
         apply(userId, PointType.POST_COMMENT, COMMENT_REWARD);
+    }
+    @Transactional
+    public void cancelRewardForComment(Long userId){
+        apply(userId, PointType.DELETE_COMMENT, COMMENT_DELETE);
     }
 
     @Transactional

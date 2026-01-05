@@ -80,6 +80,7 @@ public class AnswerServiceImpl implements AnswerService {
         if (answer.isSelect()) {
             throw new BusinessException(AnswerErrorCode.ANSWER_SELECTED_CANNOT_DELETE);
         }
+        userPointService.cancelRewardForAnswer(userId);
         answerRepository.delete(answer);
     }
 

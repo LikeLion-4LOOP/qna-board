@@ -8,6 +8,8 @@ import {
   MyQuestionSummaryResponse,
   MyAnswerSummaryResponse,
   MyCommentSummaryResponse,
+  PointHistoryResponse,
+  PageResponse,
 } from "@/api/user";
 import { isAuthenticated } from "@/lib/auth";
 import Link from "next/link";
@@ -27,6 +29,9 @@ export default function ProfilePage() {
   >("questions");
   const [editingUsername, setEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState("");
+  const [showPointHistory, setShowPointHistory] = useState(false);
+  const [pointHistory, setPointHistory] = useState<PointHistoryResponse[]>([]);
+  const [pointHistoryLoading, setPointHistoryLoading] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -73,6 +78,39 @@ export default function ProfilePage() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString("ko-KR");
+  };
+
+  const loadPointHistory = async () => {
+    try {
+      setPointHistoryLoading(true);
+      const data = await userApi.getMyPointHistory(0, 50);
+      setPointHistory(data.content);
+    } catch (err) {
+      console.error("포인트 내역 로딩 실패:", err);
+      alert("포인트 내역을 불러오는데 실패했습니다.");
+    } finally {
+      setPointHistoryLoading(false);
+    }
+  };
+
+  const handleShowPointHistory = () => {
+    setShowPointHistory(true);
+    if (pointHistory.length === 0) {
+      loadPointHistory();
+    }
+  };
+
+  const getPointTypeLabel = (type: string): string => {
+    const typeMap: Record<string, string> = {
+      LOGIN_DAILY: "일일 로그인",
+      POST_QUESTION: "질문 작성",
+      POST_ANSWER: "답변 작성",
+      POST_COMMENT: "댓글 작성",
+      VOTE_REWARD: "추천 보상",
+      VOTE_CANCEL: "추천 취소",
+      SELECTED_ANSWER: "답변 채택",
+    };
+    return typeMap[type] || type;
   };
 
   if (loading) {
@@ -157,9 +195,17 @@ export default function ProfilePage() {
 
         <div className="grid grid-cols-2 gap-6 pt-6 border-t border-slate-200">
           <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4">
-            <label className="block text-sm font-semibold text-slate-600 mb-1">
-              포인트
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-semibold text-slate-600">
+                포인트
+              </label>
+              <button
+                onClick={handleShowPointHistory}
+                className="text-xs text-indigo-600 hover:text-indigo-700 hover:underline font-medium"
+              >
+                내역 보기
+              </button>
+            </div>
             <div className="text-2xl font-bold text-indigo-600">
               {user.point}
             </div>
@@ -325,6 +371,96 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+
+      {/* 포인트 내역 모달 */}
+      {showPointHistory && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col animate-fade-in">
+            <div className="p-6 border-b border-slate-200 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-slate-900">
+                  포인트 내역
+                </h2>
+                <button
+                  onClick={() => setShowPointHistory(false)}
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <svg
+                    className="w-6 h-6 text-slate-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              {pointHistoryLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+              ) : pointHistory.length === 0 ? (
+                <div className="text-center py-12 text-slate-400">
+                  <svg
+                    className="w-16 h-16 mx-auto mb-4 opacity-50"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <p className="text-lg">포인트 내역이 없습니다.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {pointHistory.map((history) => (
+                    <div
+                      key={history.id}
+                      className="flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="font-semibold text-slate-900">
+                            {getPointTypeLabel(history.type)}
+                          </span>
+                          <span
+                            className={`text-sm font-medium ${
+                              history.amount >= 0
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {history.amount >= 0 ? "+" : ""}
+                            {history.amount}P
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {formatDate(history.createdAt)}
+                        </div>
+                      </div>
+                      <div className="text-sm font-semibold text-slate-700">
+                        Total: {history.balanceAfter}P
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
