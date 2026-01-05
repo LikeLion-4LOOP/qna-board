@@ -39,6 +39,10 @@ public class User {
     @Column(nullable = false, length = 20)
     private Level level;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role = Role.USER;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
