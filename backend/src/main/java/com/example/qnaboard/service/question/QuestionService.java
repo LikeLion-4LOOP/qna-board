@@ -10,6 +10,7 @@ import com.example.qnaboard.exception.QuestionErrorCode;
 import com.example.qnaboard.exception.UserErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.question.QuestionRepository;
+import com.example.qnaboard.repository.answer.AnswerRepository;
 import com.example.qnaboard.repository.user.UserRepository;
 import com.example.qnaboard.service.user.UserPointService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class QuestionService {
 
     private final QuestionRepository questionRepository;
+    private final AnswerRepository answerRepository;
     private final UserRepository userRepository;
     private final UserPointService userPointService;
 
@@ -131,11 +133,13 @@ public class QuestionService {
      *  Question → QuestionResponse 공통 변환
      */
     private QuestionResponse toResponse(Question question) {
+        int answerCount = answerRepository.countByQuestion_Id(question.getId());
         return new QuestionResponse(
                 question.getId(),
                 question.getTitle(),
                 question.getContent(),
                 question.getViewCount(),
+                answerCount,
                 new QuestionResponse.CategoryResponse(
                         question.getCategory().name(),
                         question.getCategory().getDisplayName()
@@ -171,11 +175,13 @@ public class QuestionService {
     }
 
     private QuestionResponse convertToQuestionResponse(Question question) {
+        int answerCount = answerRepository.countByQuestion_Id(question.getId());
         return new QuestionResponse(
                 question.getId(),
                 question.getTitle(),
                 question.getContent(),
                 question.getViewCount(),
+                answerCount,
                 new QuestionResponse.CategoryResponse(question.getCategory().name(),question.getCategory().getDisplayName()),
                 question.getCreatedAt(),
                 question.getUpdatedAt(),
