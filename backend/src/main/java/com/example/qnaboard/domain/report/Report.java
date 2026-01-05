@@ -1,5 +1,6 @@
 package com.example.qnaboard.domain.report;
 
+
 import com.example.qnaboard.domain.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -13,10 +14,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
         name = "reports",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_reporter_target",
-                columnNames = {"reporter_user_pk", "target_type", "target_id"}
-        )
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_reporter_target",
+                        columnNames = {"reporter_user_pk", "target_type", "target_id"}
+                )
+        }
 )
 public class Report {
 
@@ -35,6 +38,7 @@ public class Report {
 
     @Column(name = "target_id", nullable = false)
     private Long targetId;
+
 
     @Column(name = "reason", length = 50)
     private String reason;

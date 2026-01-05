@@ -96,7 +96,7 @@ public class AnswerServiceImpl implements AnswerService {
     @Transactional(readOnly = true)
     public Page<AnswerResponseDto> getAnswersByQuestion(Long questionId, Pageable pageable) {
         return answerRepository
-                .findByQuestion_IdOrderByIsSelectDescCreatedAtDesc(questionId, pageable)
+                .findByQuestion_IdAndIsHiddenFalseOrderByIsSelectDescCreatedAtDesc(questionId, pageable)
                 .map(AnswerResponseDto::from);
     }
 
@@ -122,7 +122,7 @@ public class AnswerServiceImpl implements AnswerService {
         Long questionId = target.getQuestion().getId();
 
         // 3) 이미 채택된 답변이 있으면 변경 불가
-        answerRepository.findByQuestion_IdAndIsSelectTrue(questionId)
+        answerRepository.findByQuestion_IdAndIsSelectTrueAndIsHiddenFalse(questionId) // 변경
                 .ifPresent(selected -> {
                     if (!selected.getId().equals(answerId)) {
                         throw new BusinessException(AnswerErrorCode.ALREADY_SELECTED);
@@ -192,7 +192,7 @@ public class AnswerServiceImpl implements AnswerService {
 
     @Override
     public Page<AnswerResponseDto> getAnswersByUser(Long userId, Pageable pageable) {
-        return answerRepository.findByUser_Id(userId, pageable)
+        return answerRepository.findByUser_IdAndIsHiddenFalse(userId, pageable)
                 .map(AnswerResponseDto::from);
     }
     @Override
@@ -219,6 +219,7 @@ public class AnswerServiceImpl implements AnswerService {
 
     private Answer getAnswerOrThrow(Long answerId) {
         return answerRepository.findById(answerId)
+                .filter(a -> !a.isHidden()) // isHidden getter가 boolean이면 isHidden() 가능 수정
                 .orElseThrow(() -> new BusinessException(AnswerErrorCode.ANSWER_NOT_FOUND));
     }
 

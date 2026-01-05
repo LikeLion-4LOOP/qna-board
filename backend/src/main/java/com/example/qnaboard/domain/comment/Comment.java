@@ -39,6 +39,12 @@ public class Comment {
 
     private LocalDateTime updatedAt;
 
+    @Column(nullable = false)
+    private boolean isHidden = false;
+
+    public void hide() {
+        this.isHidden = true;
+    }
 
     public Comment(String content, User user, boolean question, Long postId) {
         this.content = content;

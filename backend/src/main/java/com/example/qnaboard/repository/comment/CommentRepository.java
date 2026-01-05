@@ -19,4 +19,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             Long userId,
             Pageable pageable
     );
+    // 신고
+    Page<Comment> findByPostIdAndQuestionAndIsHiddenFalse(Long postId, boolean question, Pageable pageable);
+
+    Page<Comment> findByUser_IdAndIsHiddenFalse(Long userId, Pageable pageable);
 }

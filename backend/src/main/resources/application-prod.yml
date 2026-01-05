@@ -30,3 +30,9 @@ jwt:
   secret: ${JWT_SECRET}
   access-exp-ms: ${JWT_ACCESS_EXP_MS:900000}
   refresh-exp-ms: ${JWT_REFRESH_EXP_MS:1209600000}
+
+report:
+  threshold:
+    question: 5
+    answer: 5
+    comment: 5
