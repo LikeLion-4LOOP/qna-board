@@ -59,7 +59,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/questions/*/images").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/questions/images/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-
+                        .requestMatchers(HttpMethod.GET, "/api/users/*/profile-image").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(

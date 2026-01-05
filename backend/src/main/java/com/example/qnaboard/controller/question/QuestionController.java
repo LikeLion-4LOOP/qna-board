@@ -34,11 +34,12 @@ public class QuestionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // 2. 전체 목록 조회 (검색, 정렬 지원)
+    // 2. 전체 목록 조회 (검색, 정렬, 카테고리 필터 지원)
     @GetMapping
     public Page<QuestionResponse> list(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String category,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         // sortBy 파라미터에 따라 정렬 변경
@@ -50,8 +51,8 @@ public class QuestionController {
                     sort = Sort.by(Sort.Direction.DESC, "viewCount", "createdAt");
                     break;
                 case "answers":
-                    // 답변 많은 순: 답변 수 기준 (답변 수는 별도 계산 필요)
-                    sort = Sort.by(Sort.Direction.DESC, "createdAt");
+                    // 답변 많은 순: answerCount 기준
+                    sort = Sort.by(Sort.Direction.DESC, "answerCount", "createdAt");
                     break;
                 case "latest":
                 default:
@@ -66,11 +67,7 @@ public class QuestionController {
             );
         }
         
-        if (search != null && !search.isBlank()) {
-            return questionService.getQuestionList(search, pageable);
-        } else {
-            return questionService.getQuestionList(pageable);
-        }
+        return questionService.getQuestionList(search, category, pageable);
     }
 
     // 3. 상세 조회
@@ -109,14 +106,5 @@ public class QuestionController {
             @PageableDefault Pageable page
     ) {
         return questionService.getMyQuestions(userDetails.getUserId(), page);
-    }
-
-    // 사용자의 요청에 따라 정렬시킴 (최신/인기/답변많은수)
-    @GetMapping("/keyword")
-    public Page<QuestionResponse> getList(
-            @RequestParam(required = false) String keyword,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
-    ) {
-        return questionService.getQuestionList(keyword, pageable);
     }
 }
