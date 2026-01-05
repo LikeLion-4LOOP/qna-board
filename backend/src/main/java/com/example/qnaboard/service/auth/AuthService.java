@@ -9,6 +9,7 @@ import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.auth.RefreshTokenRepository;
 import com.example.qnaboard.repository.user.UserRepository;
 import com.example.qnaboard.security.JwtProvider;
+import com.example.qnaboard.service.point.UserPointService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +27,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
+    private final UserPointService userPointService;
 
     /**
      * 로그인
@@ -47,6 +49,8 @@ public class AuthService {
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new BusinessException(UserErrorCode.WRONG_PASSWORD);
         }
+
+        userPointService.rewardForLogin(user.getId());
 
         //토큰 발급
         String access = jwtProvider.createAccessToken(user.getId());

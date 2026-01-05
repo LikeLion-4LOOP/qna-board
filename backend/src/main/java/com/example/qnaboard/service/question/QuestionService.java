@@ -12,7 +12,7 @@ import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.question.QuestionRepository;
 import com.example.qnaboard.repository.answer.AnswerRepository;
 import com.example.qnaboard.repository.user.UserRepository;
-import com.example.qnaboard.service.user.UserPointService;
+import com.example.qnaboard.service.point.UserPointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -113,6 +113,7 @@ public class QuestionService {
                 .orElseThrow(() -> new BusinessException(QuestionErrorCode.QUESTION_NOT_FOUND));
 
         validateOwner(question, userId);
+        userPointService.cancelRewardForQuestion(userId);
         questionRepository.delete(question);
     }
 

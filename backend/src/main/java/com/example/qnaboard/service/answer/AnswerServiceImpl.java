@@ -15,7 +15,7 @@ import com.example.qnaboard.repository.answer.AnswerRepository;
 import com.example.qnaboard.repository.answer.AnswerVoteRepository;
 import com.example.qnaboard.repository.question.QuestionRepository;
 import com.example.qnaboard.repository.user.UserRepository;
-import com.example.qnaboard.service.user.UserPointService;
+import com.example.qnaboard.service.point.UserPointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -80,6 +80,7 @@ public class AnswerServiceImpl implements AnswerService {
         if (answer.isSelect()) {
             throw new BusinessException(AnswerErrorCode.ANSWER_SELECTED_CANNOT_DELETE);
         }
+        userPointService.cancelRewardForAnswer(userId);
         answerRepository.delete(answer);
     }
 
@@ -166,6 +167,8 @@ public class AnswerServiceImpl implements AnswerService {
         }
 
         Answer answer = getAnswerOrThrow(answerId);
+        Long answerPosterId = answerRepository.findById(answerId).orElseThrow(() ->
+                new BusinessException(AnswerErrorCode.ANSWER_NOT_FOUND)).getUser().getId();
 
         Optional<AnswerVote> voteOpt = answerVoteRepository.findByAnswer_IdAndUser_Id(answerId, userId);
         if (voteOpt.isEmpty()) {
@@ -174,6 +177,8 @@ public class AnswerServiceImpl implements AnswerService {
 
         answerVoteRepository.delete(voteOpt.get());
         answer.downVote();
+        userPointService.cancelRewardForVote(answerPosterId);
+
         answerRepository.save(answer);
     }
 

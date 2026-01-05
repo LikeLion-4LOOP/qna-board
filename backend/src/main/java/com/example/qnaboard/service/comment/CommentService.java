@@ -13,7 +13,7 @@ import com.example.qnaboard.exception.UserErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.comment.CommentRepository;
 import com.example.qnaboard.repository.user.UserRepository;
-import com.example.qnaboard.service.user.UserPointService;
+import com.example.qnaboard.service.point.UserPointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -138,6 +138,7 @@ public class CommentService {
                 );
 
         validateOwner(comment, userId); //본인 댓글만 삭제 가능
+        userPointService.cancelRewardForComment(userId);
 
         commentRepository.delete(comment);
     }

@@ -33,6 +33,14 @@ export interface MyCommentSummaryResponse {
   createdAt: string;
 }
 
+export interface PointHistoryResponse {
+  id: number;
+  type: string; // PointType enum (LOGIN_DAILY, POST_QUESTION, etc.)
+  amount: number;
+  balanceAfter: number;
+  createdAt: string;
+}
+
 export interface PageResponse<T> {
   content: T[];
   totalElements: number;
@@ -84,6 +92,19 @@ export const userApi = {
   ): Promise<PageResponse<MyCommentSummaryResponse>> => {
     const response = await apiClient.get<PageResponse<MyCommentSummaryResponse>>(
       '/users/comments',
+      {
+        params: { page, size },
+      }
+    );
+    return response.data;
+  },
+
+  getMyPointHistory: async (
+    page: number = 0,
+    size: number = 20
+  ): Promise<PageResponse<PointHistoryResponse>> => {
+    const response = await apiClient.get<PageResponse<PointHistoryResponse>>(
+      '/users/me/points',
       {
         params: { page, size },
       }
