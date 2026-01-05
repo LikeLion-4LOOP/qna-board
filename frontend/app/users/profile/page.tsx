@@ -11,7 +11,8 @@ import {
   PointHistoryResponse,
   PageResponse,
 } from "@/api/user";
-import { isAuthenticated } from "@/lib/auth";
+import { isAuthenticated, clearTokens } from "@/lib/auth";
+import { authApi } from "@/api/auth";
 import Link from "next/link";
 
 export default function ProfilePage() {
@@ -32,6 +33,8 @@ export default function ProfilePage() {
   const [showPointHistory, setShowPointHistory] = useState(false);
   const [pointHistory, setPointHistory] = useState<PointHistoryResponse[]>([]);
   const [pointHistoryLoading, setPointHistoryLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -111,6 +114,43 @@ export default function ProfilePage() {
       SELECTED_ANSWER: "답변 채택",
     };
     return typeMap[type] || type;
+  };
+
+  const handleDeleteUser = async () => {
+    if (
+      !confirm(
+        "정말 회원 탈퇴를 하시겠습니까?\n탈퇴한 계정은 복구할 수 없습니다."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      await userApi.deleteUser();
+
+      // 로그아웃 처리
+      clearTokens();
+      try {
+        await authApi.logout();
+      } catch (logoutErr) {
+        // 로그아웃 실패는 무시 (이미 탈퇴되었으므로)
+        console.error("로그아웃 실패:", logoutErr);
+      }
+
+      alert("회원 탈퇴가 완료되었습니다.");
+      router.push("/auth/login");
+    } catch (err: any) {
+      console.error("회원 탈퇴 실패:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "회원 탈퇴에 실패했습니다.";
+      alert(`회원 탈퇴에 실패했습니다: ${errorMessage}`);
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
   if (loading) {
@@ -218,6 +258,29 @@ export default function ProfilePage() {
               {user.level}
             </div>
           </div>
+        </div>
+
+        {/* 회원 탈퇴 버튼 */}
+        <div className="mt-6 pt-6 border-t border-slate-200">
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full px-4 py-3 bg-red-50 text-red-600 rounded-xl font-semibold hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+            회원 탈퇴
+          </button>
         </div>
       </div>
 
@@ -457,6 +520,74 @@ export default function ProfilePage() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 회원 탈퇴 확인 모달 */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fade-in">
+            <div className="p-6 border-b border-slate-200">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-red-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  회원 탈퇴 확인
+                </h2>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-slate-700 mb-4">
+                정말 회원 탈퇴를 하시겠습니까?
+              </p>
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+                <p className="text-sm text-red-700 font-semibold mb-2">
+                  탈퇴 시 주의사항:
+                </p>
+                <ul className="text-sm text-red-600 space-y-1 list-disc list-inside">
+                  <li>모든 게시글, 답변, 댓글이 삭제됩니다</li>
+                  <li>보유한 포인트가 모두 소멸됩니다</li>
+                  <li>탈퇴한 계정은 복구할 수 없습니다</li>
+                </ul>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleteLoading}
+                  className="flex-1 px-4 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300 transition-colors disabled:opacity-50"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleDeleteUser}
+                  disabled={deleteLoading}
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {deleteLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      처리 중...
+                    </>
+                  ) : (
+                    "탈퇴하기"
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
