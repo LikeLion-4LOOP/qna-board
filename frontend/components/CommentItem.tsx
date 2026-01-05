@@ -115,7 +115,8 @@ export default function CommentItem({ comment, onUpdate, authenticated, currentU
                 </button>
               </>
             )}
-            {authenticated && !canEdit && (
+            {/* 신고 버튼 숨김 (기능 구현 전) */}
+            {false && authenticated && !canEdit && (
               <button
                 onClick={() => setShowReportModal(true)}
                 className="px-3 py-1.5 text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"

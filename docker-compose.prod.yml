@@ -2,6 +2,7 @@ services:
   mysql:
     image: mysql:8.0
     environment:
+      TZ: Asia/Seoul
       MYSQL_DATABASE: qna_prod
       MYSQL_USER: qna
       MYSQL_PASSWORD: qna123
@@ -11,6 +12,8 @@ services:
     restart: unless-stopped
     volumes:
       - mysql_data:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
 
   backend:
     env_file:
@@ -22,6 +25,7 @@ services:
     depends_on:
       - mysql
     environment:
+      TZ: Asia/Seoul
       SPRING_PROFILES_ACTIVE: prod
       DB_HOST: mysql
       DB_PORT: 3306
@@ -31,6 +35,9 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
 
   frontend:
     build:
@@ -44,5 +51,11 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
 volumes:
   mysql_data:

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { answerApi, AnswerResponse } from '@/api/answer';
+import { commentApi } from '@/api/comment';
 import ReportModal from './ReportModal';
 import CommentModal from './CommentModal';
 
@@ -46,6 +47,20 @@ export default function AnswerItem({
     const [showCommentModal, setShowCommentModal] = useState(false);
     const [isVoted, setIsVoted] = useState(false);
     const [voteLoading, setVoteLoading] = useState(false);
+    const [commentCount, setCommentCount] = useState(0);
+
+    useEffect(() => {
+        const loadCommentCount = async () => {
+            try {
+                const data = await commentApi.getComments(answer.id, false);
+                setCommentCount(data.totalElements || data.content.length);
+            } catch (err) {
+                console.error('댓글 갯수 로딩 실패:', err);
+                setCommentCount(0);
+            }
+        };
+        loadCommentCount();
+    }, [answer.id]);
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -332,7 +347,7 @@ export default function AnswerItem({
                             d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                         />
                     </svg>
-                    댓글 보기
+                    댓글 보기 ({commentCount})
                 </button>
             </div>
 
