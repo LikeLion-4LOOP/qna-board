@@ -10,8 +10,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.example.qnaboard.exception.common.BusinessException;
 
 import java.util.List;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,10 +39,15 @@ public class QuestionImageController {
 
     @GetMapping("/images/{imageId}")
     public ResponseEntity<byte[]> download(@PathVariable Long imageId) {
-        QuestionImageBinaryResponse res = questionImageService.download(imageId);
-        return ResponseEntity.ok()
-                .header("Content-Type", res.contentType())
-                .header("Content-Disposition", "inline; filename=\"" + res.originalName() + "\"")
-                .body(res.data());
+        try {
+            QuestionImageBinaryResponse res = questionImageService.download(imageId);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(res.contentType()))
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "inline; filename=\"" + res.originalName() + "\"")
+                    .body(res.data());
+        } catch (BusinessException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

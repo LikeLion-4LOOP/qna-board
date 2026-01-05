@@ -112,8 +112,6 @@ export default function NewQuestionPage() {
       setImagePreviews(previews);
     });
 
-    // 로딩 중 표시를 위해 빈 배열로 초기화
-    setImagePreviews(Array(newImages.length).fill(""));
 
     // 파일 입력 초기화 (같은 파일 다시 선택 가능하도록)
     e.target.value = "";
@@ -490,60 +488,44 @@ export default function NewQuestionPage() {
                       preview.length > 0 &&
                       preview.startsWith("data:image/") ? (
                         <>
-                          <img
-                            src={preview}
-                            alt={`미리보기 ${index + 1}`}
-                            className="w-full h-48 object-contain cursor-pointer hover:opacity-90 transition-opacity"
-                            style={{ backgroundColor: "transparent" }}
-                            onClick={() => {
-                              console.log(
-                                "이미지 클릭:",
-                                index,
-                                "커서 위치:",
-                                contentTextareaRef.current?.selectionStart
-                              );
-                              insertImageAtCursor(index);
-                            }}
-                            title="클릭하여 텍스트 커서 위치에 삽입"
-                            onLoad={(e) => {
-                              console.log(
-                                "이미지 로드 성공:",
-                                index,
-                                "크기:",
-                                (e.target as HTMLImageElement).naturalWidth,
-                                "x",
-                                (e.target as HTMLImageElement).naturalHeight
-                              );
-                            }}
-                            onError={(e) => {
-                              console.error(
-                                "이미지 로드 실패:",
-                                index,
-                                preview.substring(0, 50)
-                              );
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = "none";
-                              const parent = target.parentElement;
-                              if (parent) {
-                                const existingError =
-                                  parent.querySelector(".image-error");
-                                if (!existingError) {
-                                  const errorDiv =
-                                    document.createElement("div");
-                                  errorDiv.className =
-                                    "image-error w-full h-48 bg-slate-100 flex items-center justify-center";
-                                  errorDiv.innerHTML =
-                                    '<span class="text-slate-400 text-sm">이미지 로드 실패</span>';
-                                  parent.appendChild(errorDiv);
-                                }
-                              }
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center pointer-events-none">
-                            <span className="text-white text-xs opacity-0 group-hover:opacity-100 font-medium">
-                              클릭하여 삽입
-                            </span>
-                          </div>
+                            {preview && preview.startsWith("data:image/") && (
+                                <img
+                                    src={preview}
+                                    alt={`미리보기 ${index + 1}`}
+                                    className="w-full h-48 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                                    style={{ backgroundColor: "transparent" }}
+                                    onClick={() => {
+                                        console.log(
+                                            "이미지 클릭:",
+                                            index,
+                                            "커서 위치:",
+                                            contentTextareaRef.current?.selectionStart
+                                        );
+                                        insertImageAtCursor(index);
+                                    }}
+                                    title="클릭하여 텍스트 커서 위치에 삽입"
+                                    onLoad={(e) => {
+                                        console.log(
+                                            "이미지 로드 성공:",
+                                            index,
+                                            "크기:",
+                                            (e.target as HTMLImageElement).naturalWidth,
+                                            "x",
+                                            (e.target as HTMLImageElement).naturalHeight
+                                        );
+                                    }}
+                                    onError={(e) => {
+                                        console.error(
+                                            "이미지 로드 실패:",
+                                            index,
+                                            preview.substring(0, 50)
+                                        );
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = "none";
+                                    }}
+                                />
+                            )}
+                            
                         </>
                       ) : (
                         <div className="w-full h-48 bg-slate-100 flex items-center justify-center border-2 border-dashed border-slate-300">
@@ -554,11 +536,7 @@ export default function NewQuestionPage() {
                           </span>
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center pointer-events-none">
-                        <span className="text-white text-xs opacity-0 group-hover:opacity-100 font-medium">
-                          클릭하여 삽입
-                        </span>
-                      </div>
+                        
                       <button
                         type="button"
                         onClick={(e) => {
