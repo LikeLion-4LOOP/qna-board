@@ -18,4 +18,7 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
     Optional<Answer> findByQuestion_IdAndIsSelectTrue(Long questionId);
 
     Page<Answer> findByUser_Id(Long userId, Pageable pageable);
+    
+    // 질문별 답변 수 조회
+    int countByQuestion_Id(Long questionId);
 }
