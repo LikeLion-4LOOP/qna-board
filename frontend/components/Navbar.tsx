@@ -12,6 +12,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [authenticated, setAuthenticated] = useState(false);
   const [user, setUser] = useState<UserResponse | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     // 페이지 변경 시마다 인증 상태 확인
@@ -21,12 +22,44 @@ export default function Navbar() {
     // 인증된 경우 사용자 정보 가져오기
     if (auth) {
       userApi.getUser()
-        .then(setUser)
-        .catch(() => setUser(null));
+        .then((userData) => {
+          setUser(userData);
+          // 프로필 이미지 로드
+          if (userData) {
+            loadProfileImage(userData.id);
+          }
+        })
+        .catch(() => {
+          setUser(null);
+          setProfileImageUrl(null);
+        });
     } else {
       setUser(null);
+      setProfileImageUrl(null);
     }
   }, [pathname]);
+
+  const loadProfileImage = async (userId: number, forceRefresh = false) => {
+    try {
+      const imageUrl = userApi.getProfileImageUrl(userId);
+      // 캐시 무효화를 위해 타임스탬프 추가
+      const urlWithTimestamp = forceRefresh 
+        ? `${imageUrl}?t=${Date.now()}`
+        : imageUrl;
+      
+      const response = await fetch(urlWithTimestamp, {
+        cache: forceRefresh ? 'no-cache' : 'default'
+      });
+      if (response.ok) {
+        // 타임스탬프를 포함한 URL로 설정하여 캐시 무효화
+        setProfileImageUrl(forceRefresh ? urlWithTimestamp : imageUrl);
+      } else {
+        setProfileImageUrl(null);
+      }
+    } catch (err) {
+      setProfileImageUrl(null);
+    }
+  };
 
   // 주기적으로 인증 상태 확인 (로그인/로그아웃 후 즉시 반영)
   useEffect(() => {
@@ -36,13 +69,38 @@ export default function Navbar() {
       
       if (auth && !user) {
         userApi.getUser()
-          .then(setUser)
-          .catch(() => setUser(null));
+          .then((userData) => {
+            setUser(userData);
+            if (userData) {
+              loadProfileImage(userData.id);
+            }
+          })
+          .catch(() => {
+            setUser(null);
+            setProfileImageUrl(null);
+          });
       } else if (!auth) {
         setUser(null);
+        setProfileImageUrl(null);
       }
     }, 1000);
     return () => clearInterval(interval);
+  }, [user]);
+
+  // 프로필 이미지 업데이트 이벤트 리스너
+  useEffect(() => {
+    const handleProfileImageUpdate = (event: CustomEvent) => {
+      const userId = event.detail?.userId;
+      if (userId && user?.id === userId) {
+        // 캐시 무효화를 위해 forceRefresh=true로 호출
+        loadProfileImage(userId, true);
+      }
+    };
+
+    window.addEventListener('profileImageUpdated', handleProfileImageUpdate as EventListener);
+    return () => {
+      window.removeEventListener('profileImageUpdated', handleProfileImageUpdate as EventListener);
+    };
   }, [user]);
 
   const handleLogout = async () => {
@@ -85,10 +143,24 @@ export default function Navbar() {
               <>
                 <Link
                   href="/users/profile"
-                  className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-sm hover:from-indigo-500 hover:to-purple-500 transition-all shadow-md hover:shadow-lg"
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm hover:opacity-90 transition-all shadow-md hover:shadow-lg overflow-hidden"
                   title="내 프로필"
+                  style={{
+                    background: profileImageUrl 
+                      ? 'none' 
+                      : 'linear-gradient(to bottom right, rgb(129, 140, 248), rgb(168, 85, 247))'
+                  }}
                 >
-                  {user?.username?.charAt(0)?.toUpperCase() || '?'}
+                  {profileImageUrl ? (
+                    <img
+                      src={profileImageUrl}
+                      alt={user?.username || '프로필'}
+                      className="w-full h-full object-cover"
+                      onError={() => setProfileImageUrl(null)}
+                    />
+                  ) : (
+                    user?.username?.charAt(0)?.toUpperCase() || '?'
+                  )}
                 </Link>
                 <button
                   onClick={handleLogout}
