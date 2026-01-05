@@ -338,7 +338,42 @@ export default function QuestionDetailPage() {
             return <div key={index}>{line || "\u00A0"}</div>;
           })}
         </div>
-
+          {images.length > 0 && (
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {images.map((image) => (
+                      <img
+                          key={image.id}
+                          src={`http://localhost:8080/api/questions/images/${image.id}`}
+                          alt={image.originalName}
+                          className="rounded-xl border border-slate-200 cursor-pointer"
+                          onClick={() =>
+                              window.open(
+                                  `http://localhost:8080/api/questions/images/${image.id}`,
+                                  "_blank"
+                              )
+                          }
+                      />
+                  ))}
+              </div>
+          )}
+        {images.length > 0 && (
+  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+    {images.map((image) => (
+      <img
+        key={image.id}
+        src={`http://localhost:8080/api/questions/images/${image.id}`}
+        alt={image.originalName}
+        className="rounded-xl border border-slate-200 cursor-pointer"
+        onClick={() =>
+          window.open(
+            `http://localhost:8080/api/questions/images/${image.id}`,
+            "_blank"
+          )
+        }
+      />
+    ))}
+  </div>
+)}
         {/* 이미지가 content에 포함되지 않은 경우 하단에 표시 */}
         {images.length > 0 &&
           !question.content.match(/!\[.*?\]\(.*?\/images\/\d+.*?\)/) && (
