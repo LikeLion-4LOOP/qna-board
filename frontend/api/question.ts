@@ -91,8 +91,8 @@ export const questionApi = {
     return response.data;
   },
 
-  createQuestion: async (data: QuestionCreateRequest): Promise<string> => {
-    const response = await apiClient.post<string>("/api/questions", data);
+  createQuestion: async (data: QuestionCreateRequest): Promise<Question> => {
+    const response = await apiClient.post<Question>("/api/questions", data);
     return response.data;
   },
 

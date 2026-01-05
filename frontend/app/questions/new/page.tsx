@@ -49,16 +49,14 @@ export default function NewQuestionPage() {
         return;
       }
 
-      const questionId = await questionApi.createQuestion({
+      const createdQuestion = await questionApi.createQuestion({
         title: formData.title,
         content: formData.content,
         category: questionApi.mapCategoryIdToEnum(formData.category),
       });
-      // 응답이 ID 문자열이면 숫자로 변환, 아니면 그대로 사용
-      const id =
-        typeof questionId === "string" ? parseInt(questionId, 10) : questionId;
-      if (!isNaN(id) && id > 0) {
-        router.push(`/questions/${id}`);
+      // 생성된 질문의 ID를 사용하여 상세 페이지로 이동
+      if (createdQuestion && createdQuestion.id) {
+        router.push(`/questions/${createdQuestion.id}`);
       } else {
         router.push("/");
       }
