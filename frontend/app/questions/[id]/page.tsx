@@ -29,6 +29,9 @@ export default function QuestionDetailPage() {
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [commentCount, setCommentCount] = useState(0);
+  const [images, setImages] = useState<
+    { id: number; url: string; originalName: string }[]
+  >([]);
 
   const loadQuestion = async () => {
     try {
@@ -94,8 +97,23 @@ export default function QuestionDetailPage() {
     if (question) {
       loadAnswers();
       loadCommentCount();
+      loadImages();
     }
   }, [question]);
+
+  const loadImages = async () => {
+    try {
+      const imageList = await questionApi.getQuestionImages(questionId);
+      const imageUrls = imageList.map((img) => ({
+        id: img.id,
+        url: questionApi.getImageUrl(img.id),
+        originalName: img.originalName,
+      }));
+      setImages(imageUrls);
+    } catch (err) {
+      console.error("이미지 로딩 실패:", err);
+    }
+  };
 
   const loadCommentCount = async () => {
     try {
@@ -294,8 +312,54 @@ export default function QuestionDetailPage() {
           })()}
 
         <div className="mb-6 text-slate-700 whitespace-pre-wrap leading-relaxed text-lg">
-          {question.content}
+          {question.content.split("\n").map((line, index) => {
+            // 마크다운 이미지 형식 파싱: ![alt](url)
+            const imageMatch = line.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+            if (imageMatch) {
+              const [, alt, url] = imageMatch;
+              const imageId = url.match(/\/images\/(\d+)/)?.[1];
+              const image = imageId
+                ? images.find((img) => img.id === Number(imageId))
+                : null;
+
+              if (image) {
+                return (
+                  <div key={index} className="my-4">
+                    <img
+                      src={image.url}
+                      alt={alt || image.originalName}
+                      className="w-full max-w-2xl mx-auto rounded-xl border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => window.open(image.url, "_blank")}
+                    />
+                  </div>
+                );
+              }
+            }
+            return <div key={index}>{line || "\u00A0"}</div>;
+          })}
         </div>
+
+        {/* 이미지가 content에 포함되지 않은 경우 하단에 표시 */}
+        {images.length > 0 &&
+          !question.content.match(/!\[.*?\]\(.*?\/images\/\d+.*?\)/) && (
+            <div className="mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {images.map((image) => (
+                  <div
+                    key={image.id}
+                    className="relative border border-slate-200 rounded-xl overflow-hidden group"
+                  >
+                    <img
+                      src={image.url}
+                      alt={image.originalName}
+                      className="w-full h-auto object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => window.open(image.url, "_blank")}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
         <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-200">
           <button
