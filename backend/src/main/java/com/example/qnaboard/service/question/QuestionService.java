@@ -62,7 +62,7 @@ public class QuestionService {
      */
     @Transactional(readOnly = true)
     public Page<QuestionResponse> getQuestionList(Pageable pageable) {
-        return questionRepository.findAll(pageable)
+        return questionRepository.findAllByIsHiddenFalse(pageable)
                 .map(this::toResponse);
     }
 
@@ -72,7 +72,7 @@ public class QuestionService {
     @Transactional
     public QuestionResponse getQuestionDetail(Long questionId) {
 
-        Question question = questionRepository.findById(questionId)
+        Question question = questionRepository.findByIdAndIsHiddenFalse(questionId)
                 .orElseThrow(() -> new BusinessException(QuestionErrorCode.QUESTION_NOT_FOUND));
 
         //조회수 증가
@@ -123,7 +123,7 @@ public class QuestionService {
      */
     @Transactional(readOnly = true)
     public Page<MyQuestionSummaryResponse> getMyQuestions(Long userId, Pageable pageable) {
-        return questionRepository.findByUser_Id(userId, pageable)
+        return questionRepository.findByUser_IdAndIsHiddenFalse(userId, pageable)
                 .map(question -> new MyQuestionSummaryResponse(
                         question.getId(),
                         question.getTitle(),
@@ -168,7 +168,7 @@ public class QuestionService {
     public Page<QuestionResponse> getQuestionList(String keyword, String category, Pageable pageable) {
         Page<Question> questions;
         QuestionCategory questionCategory = null;
-        
+
         // 카테고리 파라미터 파싱
         if (category != null && !category.isBlank()) {
             try {
@@ -177,7 +177,7 @@ public class QuestionService {
                 // 잘못된 카테고리 값은 무시
             }
         }
-        
+
         // 검색 키워드와 카테고리 조합
         if (keyword != null && !keyword.isBlank()) {
             if (questionCategory != null) {

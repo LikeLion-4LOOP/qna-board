@@ -51,6 +51,16 @@ public class Answer {
     @Column(nullable = false)
     private int viewCount = 0;
 
+    @Column(nullable = false)
+    private boolean isHidden = false;
+
+    /* ======================
+       숨김 처리
+       ====================== */
+    public void hide() {
+        this.isHidden = true;
+    }
+
     /* ======================
        생성 / 수정 시점 자동 처리
        ====================== */
