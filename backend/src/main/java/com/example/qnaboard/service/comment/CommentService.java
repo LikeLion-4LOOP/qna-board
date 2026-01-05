@@ -12,6 +12,7 @@ import com.example.qnaboard.exception.CommentErrorCode;
 import com.example.qnaboard.exception.UserErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.comment.CommentRepository;
+import com.example.qnaboard.repository.report.ReportRepository;
 import com.example.qnaboard.repository.user.UserRepository;
 import com.example.qnaboard.service.point.UserPointService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final UserPointService userPointService;
+    private final ReportRepository reportRepository;
 
     /* ================= 댓글 작성 ================= */
 
@@ -141,6 +143,17 @@ public class CommentService {
         userPointService.cancelRewardForComment(userId);
 
         commentRepository.delete(comment);
+    }
+    /* ================= 관리자 댓글 삭제 ================= */
+    @Transactional
+    public void deleteCommentByAdmin(Long commentId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException(CommentErrorCode.COMMENT_NOT_FOUND));
+
+        Long writerId = comment.getUser().getId();
+        userPointService.cancelRewardForComment(writerId);
+        commentRepository.delete(comment);
+        reportRepository.deleteByTargetId(commentId);
     }
 
     /* ================= 공통 로직 ================= */

@@ -10,5 +10,6 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
                                                         ReportTargetType targetType,
                                                         Long targetId);
 
+    void deleteByTargetId(Long targetId);
     long countByTargetTypeAndTargetId(ReportTargetType targetType, Long targetId);
 }

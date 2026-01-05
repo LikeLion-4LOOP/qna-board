@@ -5,37 +5,44 @@ import com.example.qnaboard.domain.question.QuestionCategory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
+
 public interface QuestionRepository extends JpaRepository<Question, Long> {
-    // 작성 질문 목록 조회
-    Page<Question> findByUser_Id(
-            Long userId,
-            Pageable pageable
-    );
 
-    // 제목 내 키워드 포함된 질문 검색
-    Page<Question> findByTitleContainingOrContentContaining(String title, String content, Pageable pageable);
-
-    // 카테고리로 필터링
-    Page<Question> findByCategory(QuestionCategory category, Pageable pageable);
-    
-    // 카테고리와 검색 키워드로 필터링 (카테고리 AND (제목 OR 내용))
-    Page<Question> findByCategoryAndTitleContainingOrCategoryAndContentContaining(
-            QuestionCategory category1, 
-            String title, 
-            QuestionCategory category2,
-            String content, 
-            Pageable pageable
-    );
-    //신고
-    Optional<Question> findByIdAndIsHiddenFalse(Long id);
-
+    // ===== 기본 조회 =====
     Page<Question> findAllByIsHiddenFalse(Pageable pageable);
+
+    Optional<Question> findByIdAndIsHiddenFalse(Long id);
 
     Page<Question> findByUser_IdAndIsHiddenFalse(Long userId, Pageable pageable);
 
-    Page<Question> findByIsHiddenFalseAndTitleContainingOrIsHiddenFalseAndContentContaining(String title, String content, Pageable pageable);
+    // 신고(관리자용: 숨김 목록 조회)
+    Page<Question> findAllByIsHiddenTrue(Pageable pageable);
 
+    /**
+     * 검색 + 카테고리 + 숨김 제외 조회
+     * - isHidden = false
+     * - category 가 null이면 전체
+     * - keyword 가 null/blank면 키워드 조건 생략
+     */
+    @Query("""
+        select q
+        from Question q
+        where q.isHidden = false
+          and (:category is null or q.category = :category)
+          and (
+                :keyword is null or :keyword = ''
+                or q.title like concat('%', :keyword, '%')
+                or q.content like concat('%', :keyword, '%')
+          )
+        """)
+    Page<Question> searchVisible(
+            @Param("keyword") String keyword,
+            @Param("category") QuestionCategory category,
+            Pageable pageable
+    );
 }

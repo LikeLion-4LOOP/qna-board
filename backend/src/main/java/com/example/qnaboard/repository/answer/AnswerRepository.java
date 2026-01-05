@@ -22,6 +22,8 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
     // 질문별 답변 수 조회
     int countByQuestion_Id(Long questionId);
 
+    Page<Answer> findAllByIsHiddenTrue(Pageable pageable);
+
     Page<Answer> findByQuestion_IdAndIsHiddenFalseOrderByIsSelectDescCreatedAtDesc(Long questionId, Pageable pageable);
 
     Optional<Answer> findByQuestion_IdAndIsSelectTrueAndIsHiddenFalse(Long questionId);

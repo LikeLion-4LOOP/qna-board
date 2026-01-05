@@ -10,5 +10,6 @@ public enum PointType {
     DELETE_COMMENT,
     VOTE_REWARD,
     VOTE_CANCEL,
-    SELECTED_ANSWER
+    SELECTED_ANSWER,
+    CANCEL_ANSWER
 }

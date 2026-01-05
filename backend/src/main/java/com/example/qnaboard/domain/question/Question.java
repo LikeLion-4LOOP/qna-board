@@ -40,6 +40,10 @@ public class Question {
         this.isHidden = true;
     }
 
+    public void unhide(){
+        this.isHidden = false;
+    }
+
     // 정렬용 필드
     @Column(nullable = false)
     private int answerCount = 0; // 답변 개수
