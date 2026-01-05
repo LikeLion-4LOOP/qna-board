@@ -21,36 +21,57 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // 로그인 전 오늘 날짜 확인 (localStorage에 저장된 날짜와 비교)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().split("T")[0]; // YYYY-MM-DD 형식
+      const lastLoginDate = localStorage.getItem("lastLoginRewardDate");
+
       await authApi.login(formData.userId, formData.password);
 
       // 일일 로그인 포인트 지급 여부 확인
       // 백엔드에서 로그인 시 자동으로 rewardForLogin을 호출하므로,
-      // 포인트 내역을 조회하여 오늘 LOGIN_DAILY 타입 내역이 있는지 확인
+      // 포인트 내역에서 오늘 LOGIN_DAILY가 방금 생성된 것인지 확인
       try {
         // 약간의 지연 후 포인트 내역 조회 (백엔드 처리 시간 고려)
         await new Promise((resolve) => setTimeout(resolve, 500));
 
         const pointHistory = await userApi.getMyPointHistory(0, 10);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayStr = today.toISOString().split("T")[0]; // YYYY-MM-DD 형식
+        const now = new Date();
 
-        // 오늘 날짜의 LOGIN_DAILY 타입 내역이 있는지 확인
-        const todayLoginReward = pointHistory.content.find((history) => {
-          const historyDate = new Date(history.createdAt);
+        // 오늘 날짜의 LOGIN_DAILY 타입 내역 중 방금 생성된 것 찾기 (1분 이내)
+        const latestLoginReward = pointHistory.content.find(
+          (history) => history.type === "LOGIN_DAILY"
+        );
+
+        if (latestLoginReward) {
+          const historyDate = new Date(latestLoginReward.createdAt);
           historyDate.setHours(0, 0, 0, 0);
           const historyDateStr = historyDate.toISOString().split("T")[0];
-          return history.type === "LOGIN_DAILY" && historyDateStr === todayStr;
-        });
 
-        if (todayLoginReward) {
-          // 포인트 지급 알림 표시
-          const dateStr = today.toLocaleDateString("ko-KR", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          });
-          alert(`${dateStr} 출석 포인트 지급 완료`);
+          // 오늘 날짜이고, 1분 이내에 생성된 것만
+          const historyTime = new Date(latestLoginReward.createdAt).getTime();
+          const timeDiff = now.getTime() - historyTime;
+          const oneMinute = 1 * 60 * 1000;
+
+          // 오늘 날짜이고, 1분 이내에 생성되었고, localStorage에 저장된 날짜와 다른 경우에만 알림
+          // (즉, 오늘 처음 받은 경우)
+          if (
+            historyDateStr === todayStr &&
+            timeDiff < oneMinute &&
+            lastLoginDate !== todayStr
+          ) {
+            // 포인트 지급 알림 표시
+            const dateStr = today.toLocaleDateString("ko-KR", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            });
+            alert(`${dateStr} 출석 포인트 지급 완료`);
+
+            // 오늘 날짜를 localStorage에 저장
+            localStorage.setItem("lastLoginRewardDate", todayStr);
+          }
         }
       } catch (pointErr) {
         // 포인트 내역 조회 실패는 무시 (로그인은 성공했으므로)

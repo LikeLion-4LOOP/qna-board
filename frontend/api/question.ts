@@ -131,4 +131,41 @@ export const questionApi = {
     };
     return mapping[categoryId] || "ETC";
   },
+
+  // 이미지 업로드
+  uploadImages: async (questionId: number, files: File[]): Promise<void> => {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append("files", file);
+    });
+    await apiClient.post(`/api/questions/${questionId}/images`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+
+  // 이미지 목록 조회
+  getQuestionImages: async (
+    questionId: number
+  ): Promise<QuestionImageMeta[]> => {
+    const response = await apiClient.get<QuestionImageMeta[]>(
+      `/api/questions/${questionId}/images`
+    );
+    return response.data;
+  },
+
+  // 이미지 URL 생성
+  getImageUrl: (imageId: number): string => {
+    const API_BASE_URL =
+      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+    return `${API_BASE_URL}/api/questions/images/${imageId}`;
+  },
 };
+
+export interface QuestionImageMeta {
+  id: number;
+  originalName: string;
+  contentType: string;
+  size: number;
+}
