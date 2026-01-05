@@ -111,6 +111,10 @@ export const userApi = {
     );
     return response.data;
   },
+
+  deleteUser: async (): Promise<void> => {
+    await apiClient.delete('/users/delete');
+  },
 };
 
 
