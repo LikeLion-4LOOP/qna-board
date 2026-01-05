@@ -16,6 +16,11 @@ spring:
         format_sql: true
     show-sql: false
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
+
 logging:
   level:
     root: info
