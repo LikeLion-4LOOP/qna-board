@@ -7,6 +7,7 @@ public record QuestionResponse(
         String title,
         String content,
         int viewCount,
+        int answerCount,
         CategoryResponse category,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
