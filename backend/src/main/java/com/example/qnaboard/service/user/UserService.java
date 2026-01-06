@@ -111,7 +111,7 @@ public class UserService {
         }
 
         if (userRepository.existsByUsername(userName)) {
-            throw new IllegalArgumentException("Duplicate username: " + userName);
+            throw new BusinessException(UserErrorCode.USERNAME_ALREADY_EXISTS);
         }
 
         user.updateUsername(userName);
