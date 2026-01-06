@@ -239,55 +239,33 @@ export default function EditQuestionPage() {
             (img) => !existingImages.some((existing) => existing.id === img.id)
           );
 
-          // 플레이스홀더를 실제 이미지 마크다운으로 교체
-          const placeholderPattern = /\[새이미지_(\d+)_\d+\]/g;
-          const usedIndices = new Set<number>();
-          const placeholders: Array<{ match: string; index: number }> = [];
-          
-          // 모든 플레이스홀더 찾기
-          let match;
-          while ((match = placeholderPattern.exec(finalContent)) !== null) {
-            const index = parseInt(match[1], 10);
-            placeholders.push({ match: match[0], index });
+          // placeholder 문자열만 순서대로 수집
+          const placeholderPattern = /\[이미지_(\d+)_\d+\]/g;
+          const placeholders: string[] = [];
+
+          let m;
+          while ((m = placeholderPattern.exec(finalContent)) !== null) {
+            placeholders.push(m[0]);
           }
 
-          // 플레이스홀더를 실제 이미지로 교체
-          placeholders.forEach(({ match, index }) => {
-            if (
-              index >= 0 &&
-              index < newImages.length &&
-              !usedIndices.has(index)
-            ) {
-              usedIndices.add(index);
-              const img = newImages[index];
+          // placeholder 등장 순서대로 이미지 매핑
+          let cursor = 0;
+
+          placeholders.forEach((ph) => {
+            if (cursor < uploadedImages.length) {
+              const img = uploadedImages[cursor++];
               finalContent = finalContent.replace(
-                match,
+                ph,
                 `![이미지](${questionApi.getImageUrl(img.id)})`
               );
+            } else {
+              // 매칭 실패한 placeholder 제거
+              finalContent = finalContent.replace(ph, "");
             }
           });
 
-          // 사용되지 않은 이미지 찾기 (플레이스홀더에 매핑되지 않은 이미지)
-          const unusedImages = newImages.filter(
-            (_, idx) => !usedIndices.has(idx)
-          );
-          
           // 남은 플레이스홀더 제거
           finalContent = finalContent.replace(/\[새이미지_\d+_\d+\]/g, "");
-
-          // 사용되지 않은 이미지가 있으면 마지막에 추가
-          if (unusedImages.length > 0) {
-            const imageMarkdowns = unusedImages
-              .map((img) => `\n![이미지](${questionApi.getImageUrl(img.id)})\n`)
-              .join("");
-            finalContent = finalContent + imageMarkdowns;
-          } else if (newImages.length > 0 && placeholders.length === 0) {
-            // 플레이스홀더가 하나도 없으면 (클릭하지 않은 경우) 마지막에 추가
-            const imageMarkdowns = newImages
-              .map((img) => `\n![이미지](${questionApi.getImageUrl(img.id)})\n`)
-              .join("");
-            finalContent = finalContent + imageMarkdowns;
-          }
 
           // 내용이 변경되었으면 업데이트
           if (finalContent !== formData.content) {
@@ -519,12 +497,12 @@ export default function EditQuestionPage() {
                 {existingImages.map((img) => (
                   <div
                     key={img.id}
-                    className="relative group border border-slate-200 rounded-xl overflow-hidden bg-slate-100"
+                    className="relative group border border-slate-200 rounded-xl overflow-hidden bg-white"
                   >
                     <img
                       src={questionApi.getImageUrl(img.id)}
                       alt={img.originalName}
-                      className="w-full h-32 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      className="w-full h-32 object-contain cursor-pointer hover:opacity-90 transition-opacity bg-white"
                       onClick={() => insertImageAtCursor(img.id)}
                       title="클릭하여 텍스트 커서 위치에 삽입"
                       onError={(e) => {
@@ -536,11 +514,6 @@ export default function EditQuestionPage() {
                         }
                       }}
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center pointer-events-none">
-                      <span className="text-white text-xs opacity-0 group-hover:opacity-100">
-                        클릭하여 추가
-                      </span>
-                    </div>
                   </div>
                 ))}
               </div>
@@ -617,11 +590,6 @@ export default function EditQuestionPage() {
                               target.style.display = "none";
                             }}
                           />
-                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center pointer-events-none">
-                            <span className="text-white text-xs opacity-0 group-hover:opacity-100 font-medium">
-                              클릭하여 삽입
-                            </span>
-                          </div>
                         </>
                       ) : (
                         <div className="w-full h-32 bg-slate-100 flex items-center justify-center border-2 border-dashed border-slate-300">
