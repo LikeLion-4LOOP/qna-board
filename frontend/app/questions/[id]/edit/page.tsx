@@ -15,7 +15,6 @@ export default function EditQuestionPage() {
   const [formData, setFormData] = useState({
     title: "",
     content: "",
-    tag: "",
     category: "" as CategoryId | "",
   });
   const [loading, setLoading] = useState(true);
@@ -68,7 +67,6 @@ export default function EditQuestionPage() {
       setFormData({
         title: data.title,
         content: data.content,
-        tag: "", // 태그는 더 이상 사용하지 않음
         category,
       });
 
@@ -120,6 +118,9 @@ export default function EditQuestionPage() {
     const newImages = [...selectedImages, ...validFiles];
     setSelectedImages(newImages);
 
+    // 먼저 빈 배열로 초기화하여 로딩 상태 표시
+    setImagePreviews(Array(newImages.length).fill(""));
+
     // 미리보기 생성 - FileReader 사용 (각 파일별로 독립적으로 처리)
     const previewPromises = newImages.map((file, idx) => {
       return new Promise<string>((resolve) => {
@@ -127,10 +128,6 @@ export default function EditQuestionPage() {
           const reader = new FileReader();
           reader.onload = (e) => {
             const result = e.target?.result as string;
-            console.log(
-              `이미지 미리보기 생성 성공: ${idx}`,
-              result.substring(0, 50)
-            );
             resolve(result);
           };
           reader.onerror = (err) => {
@@ -146,12 +143,8 @@ export default function EditQuestionPage() {
 
     // 모든 미리보기가 생성되면 상태 업데이트
     Promise.all(previewPromises).then((previews) => {
-      console.log("모든 미리보기 생성 완료:", previews.length);
       setImagePreviews(previews);
     });
-
-    // 로딩 중 표시를 위해 빈 배열로 초기화
-    setImagePreviews(Array(newImages.length).fill(""));
   };
 
   const handleRemoveNewImage = (index: number) => {
@@ -247,40 +240,53 @@ export default function EditQuestionPage() {
           );
 
           // 플레이스홀더를 실제 이미지 마크다운으로 교체
-          newImages.forEach((img, index) => {
-            // 플레이스홀더 패턴: [새이미지_인덱스_타임스탬프]
-            const placeholderPattern = new RegExp(
-              `\\[새이미지_${index}_\\d+\\]`,
-              "g"
-            );
-            const imageMarkdown = `![이미지](${questionApi.getImageUrl(
-              img.id
-            )})`;
-            finalContent = finalContent.replace(
-              placeholderPattern,
-              imageMarkdown
-            );
+          const placeholderPattern = /\[새이미지_(\d+)_\d+\]/g;
+          const usedIndices = new Set<number>();
+          const placeholders: Array<{ match: string; index: number }> = [];
+          
+          // 모든 플레이스홀더 찾기
+          let match;
+          while ((match = placeholderPattern.exec(finalContent)) !== null) {
+            const index = parseInt(match[1], 10);
+            placeholders.push({ match: match[0], index });
+          }
+
+          // 플레이스홀더를 실제 이미지로 교체
+          placeholders.forEach(({ match, index }) => {
+            if (
+              index >= 0 &&
+              index < newImages.length &&
+              !usedIndices.has(index)
+            ) {
+              usedIndices.add(index);
+              const img = newImages[index];
+              finalContent = finalContent.replace(
+                match,
+                `![이미지](${questionApi.getImageUrl(img.id)})`
+              );
+            }
           });
 
-          // 플레이스홀더가 남아있으면 (클릭하지 않은 이미지) 마지막에 추가
-          const remainingPlaceholders =
-            finalContent.match(/\[새이미지_\d+_\d+\]/g);
-          if (remainingPlaceholders && remainingPlaceholders.length > 0) {
-            const remainingImages = newImages.slice(
-              remainingPlaceholders.length
-            );
-            if (remainingImages.length > 0) {
-              const imageMarkdowns = remainingImages
-                .map(
-                  (img) => `\n![이미지](${questionApi.getImageUrl(img.id)})\n`
-                )
-                .join("");
-              finalContent =
-                finalContent.replace(/\[새이미지_\d+_\d+\]/g, "") +
-                imageMarkdowns;
-            } else {
-              finalContent = finalContent.replace(/\[새이미지_\d+_\d+\]/g, "");
-            }
+          // 사용되지 않은 이미지 찾기 (플레이스홀더에 매핑되지 않은 이미지)
+          const unusedImages = newImages.filter(
+            (_, idx) => !usedIndices.has(idx)
+          );
+          
+          // 남은 플레이스홀더 제거
+          finalContent = finalContent.replace(/\[새이미지_\d+_\d+\]/g, "");
+
+          // 사용되지 않은 이미지가 있으면 마지막에 추가
+          if (unusedImages.length > 0) {
+            const imageMarkdowns = unusedImages
+              .map((img) => `\n![이미지](${questionApi.getImageUrl(img.id)})\n`)
+              .join("");
+            finalContent = finalContent + imageMarkdowns;
+          } else if (newImages.length > 0 && placeholders.length === 0) {
+            // 플레이스홀더가 하나도 없으면 (클릭하지 않은 경우) 마지막에 추가
+            const imageMarkdowns = newImages
+              .map((img) => `\n![이미지](${questionApi.getImageUrl(img.id)})\n`)
+              .join("");
+            finalContent = finalContent + imageMarkdowns;
           }
 
           // 내용이 변경되었으면 업데이트
@@ -479,26 +485,6 @@ export default function EditQuestionPage() {
 
         <div className="mb-6">
           <label
-            htmlFor="tag"
-            className="block text-sm font-semibold text-slate-700 mb-2"
-          >
-            추가 태그 (선택사항)
-          </label>
-          <input
-            id="tag"
-            type="text"
-            value={formData.tag}
-            onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
-            className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
-            placeholder="예: JPA, Hibernate, Redux 등 세부 태그"
-          />
-          <p className="mt-2 text-xs text-slate-500">
-            카테고리 외에 추가로 태그를 입력할 수 있습니다
-          </p>
-        </div>
-
-        <div className="mb-6">
-          <label
             htmlFor="content"
             className="block text-sm font-semibold text-slate-700 mb-2"
           >
@@ -618,25 +604,9 @@ export default function EditQuestionPage() {
                             className="w-full h-32 object-contain cursor-pointer hover:opacity-90 transition-opacity"
                             style={{ backgroundColor: "transparent" }}
                             onClick={() => {
-                              console.log(
-                                "새 이미지 클릭:",
-                                index,
-                                "커서 위치:",
-                                contentTextareaRef.current?.selectionStart
-                              );
                               insertNewImageAtCursor(index);
                             }}
                             title="클릭하여 텍스트 커서 위치에 삽입"
-                            onLoad={(e) => {
-                              console.log(
-                                "이미지 로드 성공:",
-                                index,
-                                "크기:",
-                                (e.target as HTMLImageElement).naturalWidth,
-                                "x",
-                                (e.target as HTMLImageElement).naturalHeight
-                              );
-                            }}
                             onError={(e) => {
                               console.error(
                                 "이미지 로드 실패:",
@@ -645,20 +615,6 @@ export default function EditQuestionPage() {
                               );
                               const target = e.target as HTMLImageElement;
                               target.style.display = "none";
-                              const parent = target.parentElement;
-                              if (parent) {
-                                const existingError =
-                                  parent.querySelector(".image-error");
-                                if (!existingError) {
-                                  const errorDiv =
-                                    document.createElement("div");
-                                  errorDiv.className =
-                                    "image-error w-full h-32 bg-slate-100 flex items-center justify-center";
-                                  errorDiv.innerHTML =
-                                    '<span class="text-slate-400 text-sm">이미지 로드 실패</span>';
-                                  parent.appendChild(errorDiv);
-                                }
-                              }
                             }}
                           />
                           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center pointer-events-none">

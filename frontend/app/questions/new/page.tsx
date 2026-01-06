@@ -83,16 +83,15 @@ export default function NewQuestionPage() {
     setSelectedImages(newImages);
 
     // 미리보기 생성 - FileReader 사용 (각 파일별로 독립적으로 처리)
+    // 먼저 빈 배열로 초기화하여 로딩 상태 표시
+    setImagePreviews(Array(newImages.length).fill(""));
+
     const previewPromises = newImages.map((file, idx) => {
       return new Promise<string>((resolve) => {
         if (file && file instanceof File) {
           const reader = new FileReader();
           reader.onload = (e) => {
             const result = e.target?.result as string;
-            console.log(
-              `이미지 미리보기 생성 성공: ${idx}`,
-              result.substring(0, 50)
-            );
             resolve(result);
           };
           reader.onerror = (err) => {
@@ -108,7 +107,6 @@ export default function NewQuestionPage() {
 
     // 모든 미리보기가 생성되면 상태 업데이트
     Promise.all(previewPromises).then((previews) => {
-      console.log("모든 미리보기 생성 완료:", previews.length);
       setImagePreviews(previews);
     });
 
@@ -184,46 +182,46 @@ export default function NewQuestionPage() {
           // 모든 플레이스홀더 패턴 찾기: [이미지_인덱스_타임스탬프]
           const placeholderPattern = /\[이미지_(\d+)_\d+\]/g;
           const usedIndices = new Set<number>();
+          const placeholders: Array<{ match: string; index: number }> = [];
+          
+          // 모든 플레이스홀더 찾기
+          let match;
+          while ((match = placeholderPattern.exec(finalContent)) !== null) {
+            const index = parseInt(match[1], 10);
+            placeholders.push({ match: match[0], index });
+          }
 
           // 플레이스홀더를 실제 이미지로 교체
-          finalContent = finalContent.replace(
-            placeholderPattern,
-            (matchStr, indexStr) => {
-              const index = parseInt(indexStr, 10);
-              if (
-                index >= 0 &&
-                index < uploadedImages.length &&
-                !usedIndices.has(index)
-              ) {
-                usedIndices.add(index);
-                const img = uploadedImages[index];
-                return `![이미지](${questionApi.getImageUrl(img.id)})`;
-              }
-              return matchStr; // 매칭되지 않으면 원본 유지
+          placeholders.forEach(({ match, index }) => {
+            if (
+              index >= 0 &&
+              index < uploadedImages.length &&
+              !usedIndices.has(index)
+            ) {
+              usedIndices.add(index);
+              const img = uploadedImages[index];
+              finalContent = finalContent.replace(
+                match,
+                `![이미지](${questionApi.getImageUrl(img.id)})`
+              );
             }
-          );
+          });
 
-          // 플레이스홀더가 남아있으면 (클릭하지 않은 이미지) 마지막에 추가
-          const remainingPlaceholders =
-            finalContent.match(/\[이미지_\d+_\d+\]/g);
-          if (remainingPlaceholders && remainingPlaceholders.length > 0) {
-            // 사용되지 않은 이미지 찾기
-            const unusedImages = uploadedImages.filter(
-              (_, idx) => !usedIndices.has(idx)
-            );
-            if (unusedImages.length > 0) {
-              const imageMarkdowns = unusedImages
-                .map(
-                  (img) => `\n![이미지](${questionApi.getImageUrl(img.id)})\n`
-                )
-                .join("");
-              finalContent =
-                finalContent.replace(/\[이미지_\d+_\d+\]/g, "") +
-                imageMarkdowns;
-            } else {
-              finalContent = finalContent.replace(/\[이미지_\d+_\d+\]/g, "");
-            }
-          } else if (uploadedImages.length > 0 && usedIndices.size === 0) {
+          // 사용되지 않은 이미지 찾기 (플레이스홀더에 매핑되지 않은 이미지)
+          const unusedImages = uploadedImages.filter(
+            (_, idx) => !usedIndices.has(idx)
+          );
+          
+          // 남은 플레이스홀더 제거
+          finalContent = finalContent.replace(/\[이미지_\d+_\d+\]/g, "");
+
+          // 사용되지 않은 이미지가 있으면 마지막에 추가
+          if (unusedImages.length > 0) {
+            const imageMarkdowns = unusedImages
+              .map((img) => `\n![이미지](${questionApi.getImageUrl(img.id)})\n`)
+              .join("");
+            finalContent = finalContent + imageMarkdowns;
+          } else if (uploadedImages.length > 0 && placeholders.length === 0) {
             // 플레이스홀더가 하나도 없으면 (클릭하지 않은 경우) 마지막에 추가
             const imageMarkdowns = uploadedImages
               .map((img) => `\n![이미지](${questionApi.getImageUrl(img.id)})\n`)
@@ -487,46 +485,25 @@ export default function NewQuestionPage() {
                       {preview &&
                       preview.length > 0 &&
                       preview.startsWith("data:image/") ? (
-                        <>
-                            {preview && preview.startsWith("data:image/") && (
-                                <img
-                                    src={preview}
-                                    alt={`미리보기 ${index + 1}`}
-                                    className="w-full h-48 object-contain cursor-pointer hover:opacity-90 transition-opacity"
-                                    style={{ backgroundColor: "transparent" }}
-                                    onClick={() => {
-                                        console.log(
-                                            "이미지 클릭:",
-                                            index,
-                                            "커서 위치:",
-                                            contentTextareaRef.current?.selectionStart
-                                        );
-                                        insertImageAtCursor(index);
-                                    }}
-                                    title="클릭하여 텍스트 커서 위치에 삽입"
-                                    onLoad={(e) => {
-                                        console.log(
-                                            "이미지 로드 성공:",
-                                            index,
-                                            "크기:",
-                                            (e.target as HTMLImageElement).naturalWidth,
-                                            "x",
-                                            (e.target as HTMLImageElement).naturalHeight
-                                        );
-                                    }}
-                                    onError={(e) => {
-                                        console.error(
-                                            "이미지 로드 실패:",
-                                            index,
-                                            preview.substring(0, 50)
-                                        );
-                                        const target = e.target as HTMLImageElement;
-                                        target.style.display = "none";
-                                    }}
-                                />
-                            )}
-                            
-                        </>
+                        <img
+                          src={preview}
+                          alt={`미리보기 ${index + 1}`}
+                          className="w-full h-48 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                          style={{ backgroundColor: "transparent" }}
+                          onClick={() => {
+                            insertImageAtCursor(index);
+                          }}
+                          title="클릭하여 텍스트 커서 위치에 삽입"
+                          onError={(e) => {
+                            console.error(
+                              "이미지 로드 실패:",
+                              index,
+                              preview.substring(0, 50)
+                            );
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                          }}
+                        />
                       ) : (
                         <div className="w-full h-48 bg-slate-100 flex items-center justify-center border-2 border-dashed border-slate-300">
                           <span className="text-slate-400 text-sm">
