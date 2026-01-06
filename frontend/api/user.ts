@@ -6,6 +6,7 @@ export interface UserResponse {
   username: string;
   point: number;
   level: string;
+  role: "USER" | "ADMIN";
 }
 
 export interface UpdateUsernameRequest {

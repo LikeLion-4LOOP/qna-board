@@ -171,7 +171,8 @@ public class UserService {
                 user.getUserId(),
                 user.getUsername(),
                 user.getPoint(),
-                user.getLevel()
+                user.getLevel(),
+                user.getRole()
         );
     }
 

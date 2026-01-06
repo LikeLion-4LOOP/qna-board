@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { commentApi, CommentResponse } from '@/api/comment';
+import { reportApi, ReportTargetType } from '@/api/report';
 import ReportModal from './ReportModal';
 
 interface CommentItemProps {
@@ -50,9 +51,24 @@ export default function CommentItem({ comment, onUpdate, authenticated, currentU
 
   const canEdit = authenticated && currentUserId !== null && currentUserId === comment.user.id;
 
-  const handleReport = (reason: string) => {
-    // TODO: 백엔드 API 호출
-    alert(`댓글 신고가 접수되었습니다: ${reason}`);
+  const handleReport = async (reason: string) => {
+    try {
+      const result = await reportApi.report({
+        targetType: "COMMENT" as ReportTargetType,
+        targetId: comment.commentId,
+        reason,
+      });
+      if (result.hidden) {
+        alert("신고가 접수되었습니다. 신고 누적으로 인해 해당 댓글이 숨김 처리되었습니다.");
+        onUpdate();
+      } else {
+        alert(`신고가 접수되었습니다. (누적 신고: ${result.totalReports}건)`);
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "신고 처리에 실패했습니다.";
+      alert(errorMessage);
+      console.error(err);
+    }
   };
 
   return (
@@ -115,8 +131,8 @@ export default function CommentItem({ comment, onUpdate, authenticated, currentU
                 </button>
               </>
             )}
-            {/* 신고 버튼 숨김 (기능 구현 전) */}
-            {false && authenticated && !canEdit && (
+            {/* 댓글 신고 버튼 */}
+            {authenticated && !canEdit && (
               <button
                 onClick={() => setShowReportModal(true)}
                 className="px-3 py-1.5 text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"

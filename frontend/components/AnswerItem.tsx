@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { answerApi, AnswerResponse } from '@/api/answer';
 import { commentApi } from '@/api/comment';
+import { reportApi, ReportTargetType } from '@/api/report';
 import ReportModal from './ReportModal';
 import CommentModal from './CommentModal';
 
@@ -159,9 +160,24 @@ export default function AnswerItem({
         }
     };
 
-    const handleReport = (reason: string) => {
-        // TODO: 백엔드 API 호출
-        alert(`답변 신고가 접수되었습니다: ${reason}`);
+    const handleReport = async (reason: string) => {
+        try {
+            const result = await reportApi.report({
+                targetType: "ANSWER" as ReportTargetType,
+                targetId: answer.id,
+                reason,
+            });
+            if (result.hidden) {
+                alert("신고가 접수되었습니다. 신고 누적으로 인해 해당 답변이 숨김 처리되었습니다.");
+                onUpdate();
+            } else {
+                alert(`신고가 접수되었습니다. (누적 신고: ${result.totalReports}건)`);
+            }
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.message || "신고 처리에 실패했습니다.";
+            alert(errorMessage);
+            console.error(err);
+        }
     };
 
     const canEdit =
@@ -320,6 +336,19 @@ export default function AnswerItem({
                                         </button>
                                     </>
                                 )}
+
+                                {/* 답변 신고 버튼 */}
+                                {authenticated &&
+                                    currentUserId !== null &&
+                                    answer.userId !== undefined &&
+                                    currentUserId !== answer.userId && (
+                                        <button
+                                            onClick={() => setShowReportModal(true)}
+                                            className="px-3 py-1.5 text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"
+                                        >
+                                            신고
+                                        </button>
+                                    )}
                             </>
                         )}
                     </div>
