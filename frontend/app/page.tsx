@@ -124,7 +124,6 @@ export default function Home() {
   const stats = {
     totalQuestions: questionsArray.length,
     totalAnswers: questionsArray.reduce((sum, q) => sum + q.answerCount, 0),
-    totalViews: questionsArray.reduce((sum, q) => sum + q.viewCount, 0),
     todayQuestions: questionsArray.filter((q) => {
       const today = new Date();
       const questionDate = new Date(q.createdAt);
@@ -425,12 +424,6 @@ export default function Home() {
                   <div className="text-xs text-slate-600 mb-1">전체 답변수</div>
                   <div className="text-xl font-bold text-slate-900">
                     {stats.totalAnswers}
-                  </div>
-                </div>
-                <div className="pb-3 border-b border-slate-200">
-                  <div className="text-xs text-slate-600 mb-1">전체 조회수</div>
-                  <div className="text-xl font-bold text-slate-900">
-                    {stats.totalViews}
                   </div>
                 </div>
                 <div>

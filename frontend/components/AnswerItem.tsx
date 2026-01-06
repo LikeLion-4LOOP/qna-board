@@ -61,7 +61,14 @@ export default function AnswerItem({
             }
         };
         loadCommentCount();
-    }, [answer.id]);
+
+        // 추천 상태 확인
+        if (authenticated && currentUserId) {
+            answerApi.checkVoteStatus(answer.id)
+                .then(voted => setIsVoted(voted))
+                .catch(err => console.error('추천 상태 확인 실패:', err));
+        }
+    }, [answer.id, authenticated, currentUserId]);
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);

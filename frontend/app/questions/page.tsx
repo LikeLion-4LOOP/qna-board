@@ -16,6 +16,7 @@ function QuestionsPageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>(
     (searchParams?.get("sort") as SortOption) || "latest"
   );
@@ -28,6 +29,11 @@ function QuestionsPageContent() {
   useEffect(() => {
     loadQuestions();
   }, [searchQuery, sortBy, selectedCategory]);
+
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setSearchQuery(searchInput);
+  };
 
   const loadQuestions = async () => {
     try {
@@ -92,7 +98,7 @@ function QuestionsPageContent() {
       <div className="mb-6 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
         <div className="flex flex-col md:flex-row gap-4">
           {/* 검색바 */}
-          <div className="flex-1 flex gap-2">
+          <form onSubmit={handleSearch} className="flex-1 flex gap-2">
             <div className="flex-1 relative">
               <svg
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400"
@@ -109,12 +115,20 @@ function QuestionsPageContent() {
               </svg>
               <input
                 type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="제목, 내용, 태그로 검색..."
-                className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
+                className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
               />
+              <button
+                type="submit"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-indigo-600 hover:text-indigo-700 font-medium text-sm"
+              >
+                검색
+              </button>
             </div>
+          </form>
+          <div className="flex gap-2">
             <button
               onClick={() => setShowCategoryModal(true)}
               className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 whitespace-nowrap"
@@ -134,10 +148,8 @@ function QuestionsPageContent() {
               </svg>
               카테고리로 찾기
             </button>
-          </div>
 
           {/* 정렬 선택 */}
-          <div className="flex gap-2">
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
@@ -172,13 +184,15 @@ function QuestionsPageContent() {
               </div>
               <button
                 onClick={() => {
-                  setSelectedCategory(null);
-                  setSelectedTag(null);
-                }}
-                className="px-3 py-1.5 text-sm text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                필터 초기화
-              </button>
+                setSelectedCategory(null);
+                setSelectedTag(null);
+                setSearchInput("");
+                setSearchQuery("");
+              }}
+              className="px-3 py-1.5 text-sm text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              필터 초기화
+            </button>
             </div>
           </div>
         )}
@@ -347,7 +361,7 @@ function QuestionsPageContent() {
                 </div>
               </div>
               <p className="text-slate-600 mb-4 line-clamp-2 leading-relaxed">
-                {question.content}
+                {question.content.replace(/!\[.*?\]\(.*?\)/g, '').trim()}
               </p>
               <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                 <div className="flex items-center gap-4">

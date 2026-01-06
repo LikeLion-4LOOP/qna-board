@@ -31,6 +31,7 @@ public class QuestionService {
     private final UserRepository userRepository;
     private final UserPointService userPointService;
     private final ReportRepository reportRepository;
+    private final AnswerRepository answerRepository;
 
     /**
      * 1️⃣ 질문 등록 (카테고리 + 포인트 지급)
@@ -156,12 +157,15 @@ public class QuestionService {
     }
 
     private QuestionResponse toResponse(Question question) {
+        // 숨김 처리되지 않은 답변 수만 카운팅
+        int visibleAnswerCount = answerRepository.countByQuestion_IdAndIsHiddenFalse(question.getId());
+        
         return new QuestionResponse(
                 question.getId(),
                 question.getTitle(),
                 question.getContent(),
                 question.getViewCount(),
-                question.getAnswerCount(),
+                visibleAnswerCount,
                 new QuestionResponse.CategoryResponse(
                         question.getCategory().name(),
                         question.getCategory().getDisplayName()

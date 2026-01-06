@@ -209,6 +209,14 @@ public class AnswerServiceImpl implements AnswerService {
     }
 
     @Override
+    public boolean checkVoteStatus(Long answerId, Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        return answerVoteRepository.existsByAnswer_IdAndUser_Id(answerId, userId);
+    }
+
+    @Override
     public Page<AnswerResponseDto> getAnswersByUser(Long userId, Pageable pageable) {
         return answerRepository.findByUser_IdAndIsHiddenFalse(userId, pageable)
                 .map(AnswerResponseDto::from);
