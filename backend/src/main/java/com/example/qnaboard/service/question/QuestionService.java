@@ -10,8 +10,9 @@ import com.example.qnaboard.dto.user.response.MyQuestionSummaryResponse;
 import com.example.qnaboard.exception.QuestionErrorCode;
 import com.example.qnaboard.exception.UserErrorCode;
 import com.example.qnaboard.exception.common.BusinessException;
-import com.example.qnaboard.repository.question.QuestionRepository;
 import com.example.qnaboard.repository.answer.AnswerRepository;
+import com.example.qnaboard.repository.question.QuestionRepository;
+import com.example.qnaboard.repository.report.ReportRepository;
 import com.example.qnaboard.repository.user.UserRepository;
 import com.example.qnaboard.service.point.UserPointService;
 import lombok.RequiredArgsConstructor;
@@ -26,39 +27,32 @@ import org.springframework.transaction.annotation.Transactional;
 public class QuestionService {
 
     private final QuestionRepository questionRepository;
-    private final AnswerRepository answerRepository;
     private final UserRepository userRepository;
     private final UserPointService userPointService;
+    private final ReportRepository reportRepository;
 
     /**
      * 1️⃣ 질문 등록 (카테고리 + 포인트 지급)
      */
-    public QuestionResponse createQuestion(
-            Long userId,
-            QuestionCreateRequest request
-    ) {
-        // 작성자 유저 확인
+    public QuestionResponse createQuestion(Long userId, QuestionCreateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
 
-        // 질문 생성 (카테고리 포함)
         Question question = Question.builder()
                 .title(request.title())
                 .content(request.content())
-                .category(request.category())   // ✅ 카테고리 저장
+                .category(request.category())
                 .user(user)
                 .build();
 
-        // 포인트 지급
         userPointService.rewardForPostQuestion(userId);
 
         Question saved = questionRepository.save(question);
-
         return toResponse(saved);
     }
 
     /**
-     * 2️⃣ 질문 전체 목록 조회
+     * 2️⃣ 질문 전체 목록 조회 (숨김 제외)
      */
     @Transactional(readOnly = true)
     public Page<QuestionResponse> getQuestionList(Pageable pageable) {
@@ -67,73 +61,99 @@ public class QuestionService {
     }
 
     /**
-     * 3️. 질문 상세 조회 (+ 조회수 증가)
+     * ✅ 질문 목록 검색(검색 + 카테고리 필터) (숨김 제외)
      */
-    @Transactional
-    public QuestionResponse getQuestionDetail(Long questionId) {
+    @Transactional(readOnly = true)
+    public Page<QuestionResponse> getQuestionList(String keyword, String category, Pageable pageable) {
+        QuestionCategory parsedCategory = parseCategoryOrNull(category);
+        String normalizedKeyword = normalizeKeyword(keyword);
 
+        return questionRepository.searchVisible(normalizedKeyword, parsedCategory, pageable)
+                .map(this::toResponse);
+    }
+
+    /**
+     * 3️⃣ 질문 상세 조회
+     */
+    public QuestionResponse getQuestionDetail(Long questionId) {
         Question question = questionRepository.findByIdAndIsHiddenFalse(questionId)
                 .orElseThrow(() -> new BusinessException(QuestionErrorCode.QUESTION_NOT_FOUND));
 
-        //조회수 증가
         question.addViewCount();
-
         return toResponse(question);
     }
 
     /**
-     * 4️⃣ 질문 수정 (카테고리 변경 가능)
+     * 4️⃣ 질문 수정
      */
-    public QuestionResponse updateQuestion(
-            Long userId,
-            Long questionId,
-            QuestionUpdateRequest request
-    ) {
+    public QuestionResponse updateQuestion(Long userId, Long questionId, QuestionUpdateRequest request) {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new BusinessException(QuestionErrorCode.QUESTION_NOT_FOUND));
 
         validateOwner(question, userId);
 
-        question.update(
-                request.title(),
-                request.content(),
-                request.category()   // ✅ 카테고리 수정
-        );
-
+        question.update(request.title(), request.content(), request.category());
         return toResponse(question);
     }
 
     /**
-     * 5️⃣ 질문 삭제
+     * 5️⃣ 질문 삭제 (작성자만)
      */
-    public void deleteQuestion(
-            Long userId,
-            Long questionId
-    ) {
+    public void deleteQuestion(Long userId, Long questionId) {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new BusinessException(QuestionErrorCode.QUESTION_NOT_FOUND));
 
         validateOwner(question, userId);
         userPointService.cancelRewardForQuestion(userId);
         questionRepository.delete(question);
+
     }
 
     /**
-     * 6️⃣ 내가 쓴 질문 조회
+     * ✅ 관리자 질문 삭제
+     */
+    public void deleteQuestionByAdmin(Long questionId) {
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new BusinessException(QuestionErrorCode.QUESTION_NOT_FOUND));
+
+        Long writerId = question.getUser().getId();
+        userPointService.cancelRewardForQuestion(writerId);
+        questionRepository.delete(question);
+        reportRepository.deleteByTargetId(questionId);
+    }
+
+    /**
+     * 6️⃣ 내가 쓴 질문 조회 (숨김 제외)
      */
     @Transactional(readOnly = true)
     public Page<MyQuestionSummaryResponse> getMyQuestions(Long userId, Pageable pageable) {
         return questionRepository.findByUser_IdAndIsHiddenFalse(userId, pageable)
-                .map(question -> new MyQuestionSummaryResponse(
-                        question.getId(),
-                        question.getTitle(),
-                        question.getCreatedAt().toString()
+                .map(q -> new MyQuestionSummaryResponse(
+                        q.getId(),
+                        q.getTitle(),
+                        q.getCreatedAt().toString()
                 ));
     }
 
-    /**
-     *  Question → QuestionResponse 공통 변환
-     */
+    /* =========================
+       private helpers
+       ========================= */
+
+    private QuestionCategory parseCategoryOrNull(String category) {
+        if (category == null || category.isBlank()) return null;
+        try {
+            return QuestionCategory.valueOf(category.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null; // 잘못된 값이면 필터 적용 안 함
+        }
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null) return null;
+        String k = keyword.trim();
+        return k.isEmpty() ? null : k;
+    }
+
     private QuestionResponse toResponse(Question question) {
         return new QuestionResponse(
                 question.getId(),
@@ -154,62 +174,9 @@ public class QuestionService {
         );
     }
 
-    /**
-     * 🔒 작성자 검증
-     */
     private void validateOwner(Question question, Long userId) {
         if (!question.getUser().getId().equals(userId)) {
             throw new BusinessException(QuestionErrorCode.UNAUTHORIZED_USER);
         }
-    }
-
-    // 질문 목록 검색 기능 (검색, 카테고리 필터 지원)
-    @Transactional(readOnly = true)
-    public Page<QuestionResponse> getQuestionList(String keyword, String category, Pageable pageable) {
-        Page<Question> questions;
-        QuestionCategory questionCategory = null;
-
-        // 카테고리 파라미터 파싱
-        if (category != null && !category.isBlank()) {
-            try {
-                questionCategory = QuestionCategory.valueOf(category.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                // 잘못된 카테고리 값은 무시
-            }
-        }
-
-        // 검색 키워드와 카테고리 조합
-        if (keyword != null && !keyword.isBlank()) {
-            if (questionCategory != null) {
-                questions = questionRepository.findByCategoryAndTitleContainingOrCategoryAndContentContaining(
-                        questionCategory, keyword, questionCategory, keyword, pageable);
-            } else {
-                questions = questionRepository.findByTitleContainingOrContentContaining(keyword, keyword, pageable);
-            }
-        } else {
-            if (questionCategory != null) {
-                questions = questionRepository.findByCategory(questionCategory, pageable);
-            } else {
-                questions = questionRepository.findAll(pageable);
-            }
-        }
-        return questions.map(this::convertToQuestionResponse);
-    }
-
-    private QuestionResponse convertToQuestionResponse(Question question) {
-        return new QuestionResponse(
-                question.getId(),
-                question.getTitle(),
-                question.getContent(),
-                question.getViewCount(),
-                question.getAnswerCount(),
-                new QuestionResponse.CategoryResponse(question.getCategory().name(),question.getCategory().getDisplayName()),
-                question.getCreatedAt(),
-                question.getUpdatedAt(),
-                new QuestionResponse.UserResponse(
-                        question.getUser().getId(),
-                        question.getUser().getUsername()
-                )
-        );
     }
 }

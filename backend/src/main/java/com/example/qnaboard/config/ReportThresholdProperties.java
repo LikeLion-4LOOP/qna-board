@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Setter
 @ConfigurationProperties(prefix = "report.threshold")
 public class ReportThresholdProperties {
-    private int question = 5;
-    private int answer = 5;
-    private int comment = 5;
+    private int question = 1;
+    private int answer = 1;
+    private int comment = 1;
 }

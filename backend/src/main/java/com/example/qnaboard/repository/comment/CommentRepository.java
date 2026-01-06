@@ -20,6 +20,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             Pageable pageable
     );
     // 신고
+    Page<Comment> findAllByIsHiddenTrue(Pageable pageable);
     Page<Comment> findByPostIdAndQuestionAndIsHiddenFalse(Long postId, boolean question, Pageable pageable);
 
     Page<Comment> findByUser_IdAndIsHiddenFalse(Long userId, Pageable pageable);

@@ -141,6 +141,14 @@ export default function Navbar() {
           <div className="flex items-center space-x-3">
             {authenticated ? (
               <>
+                {user?.role === 'ADMIN' && (
+                  <Link
+                    href="/admin"
+                    className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    관리자
+                  </Link>
+                )}
                 <Link
                   href="/users/profile"
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm hover:opacity-90 transition-all shadow-md hover:shadow-lg overflow-hidden"

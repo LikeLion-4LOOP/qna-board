@@ -45,6 +45,9 @@ public class Comment {
     public void hide() {
         this.isHidden = true;
     }
+    public void unhide() {
+        this.isHidden = false;
+    }
 
     public Comment(String content, User user, boolean question, Long postId) {
         this.content = content;

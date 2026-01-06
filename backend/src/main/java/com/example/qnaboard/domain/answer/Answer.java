@@ -61,6 +61,10 @@ public class Answer {
         this.isHidden = true;
     }
 
+    public void unhide() {
+        this.isHidden = false;
+    }
+
     /* ======================
        생성 / 수정 시점 자동 처리
        ====================== */

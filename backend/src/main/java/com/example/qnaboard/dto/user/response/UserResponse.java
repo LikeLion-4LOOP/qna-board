@@ -1,6 +1,7 @@
 package com.example.qnaboard.dto.user.response;
 
 import com.example.qnaboard.domain.user.Level;
+import com.example.qnaboard.domain.user.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -12,4 +13,5 @@ public class UserResponse {
     private String username;
     private int point;
     private Level level;
+    private Role role;
 }

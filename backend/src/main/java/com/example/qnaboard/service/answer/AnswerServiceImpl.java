@@ -14,6 +14,7 @@ import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.answer.AnswerRepository;
 import com.example.qnaboard.repository.answer.AnswerVoteRepository;
 import com.example.qnaboard.repository.question.QuestionRepository;
+import com.example.qnaboard.repository.report.ReportRepository;
 import com.example.qnaboard.repository.user.UserRepository;
 import com.example.qnaboard.service.point.UserPointService;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class AnswerServiceImpl implements AnswerService {
     private final UserRepository userRepository;
     private final AnswerVoteRepository answerVoteRepository;
     private final UserPointService userPointService;
+    private final ReportRepository reportRepository;
 
     @Override
     @Transactional
@@ -90,6 +92,21 @@ public class AnswerServiceImpl implements AnswerService {
         
         userPointService.cancelRewardForAnswer(userId);
         answerRepository.delete(answer);
+    }
+
+    @Transactional
+    public void deleteAnswerByAdmin(Long answerId) {
+        Answer answer = answerRepository.findById(answerId)
+                .orElseThrow(() -> new BusinessException(AnswerErrorCode.ANSWER_NOT_FOUND));
+
+        Question question = answer.getQuestion();
+        question.decrementAnswerCount();
+
+        Long writerId = answer.getUser().getId();
+        userPointService.cancelRewardForAnswer(writerId);
+        userPointService.cancelRewardForSelectedAnswer(writerId);
+        answerRepository.delete(answer);
+        reportRepository.deleteByTargetId(answerId);
     }
 
     @Override

@@ -36,6 +36,7 @@ public class UserPointService {
     private static final int VOTE_REWARD = 1;
     private static final int VOTE_CANCEL = -1;
     private static final int SELECTED_ANSWER_REWARD = 50;
+    private static final int CANCEL_ANSWER_REWARD = -50;
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
@@ -97,6 +98,12 @@ public class UserPointService {
     public void rewardForSelectedAnswer(Long userId) {
         apply(userId, PointType.SELECTED_ANSWER, SELECTED_ANSWER_REWARD);
     }
+
+    @Transactional
+    public void cancelRewardForSelectedAnswer(Long userId) {
+        apply(userId, PointType.SELECTED_ANSWER, CANCEL_ANSWER_REWARD);
+    }
+
 
 
 
