@@ -7,6 +7,7 @@ import { questionApi, Question } from "@/api/question";
 import { answerApi, AnswerResponse } from "@/api/answer";
 import { commentApi } from "@/api/comment";
 import { userApi } from "@/api/user";
+import { reportApi, ReportTargetType } from "@/api/report";
 import { isAuthenticated } from "@/lib/auth";
 import AnswerList from "@/components/AnswerList";
 import CommentModal from "@/components/CommentModal";
@@ -137,9 +138,25 @@ export default function QuestionDetailPage() {
     }
   };
 
-  const handleReport = (reason: string) => {
-    // TODO: 백엔드 API 호출
-    alert(`신고가 접수되었습니다: ${reason}`);
+  const handleReport = async (reason: string) => {
+    try {
+      const result = await reportApi.report({
+        targetType: "QUESTION" as ReportTargetType,
+        targetId: questionId,
+        reason,
+      });
+      if (result.hidden) {
+        alert("신고가 접수되었습니다. 신고 누적으로 인해 해당 글이 숨김 처리되었습니다.");
+        router.push("/");
+      } else {
+        alert(`신고가 접수되었습니다. (누적 신고: ${result.totalReports}건)`);
+      }
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || "신고 처리에 실패했습니다.";
+      alert(errorMessage);
+      console.error(err);
+    }
   };
 
   const handleBlockUser = () => {
@@ -224,23 +241,18 @@ export default function QuestionDetailPage() {
                 </div>
               </div>
             </div>
-            {/* 사용자 신고/차단 버튼 숨김 (기능 구현 전) */}
-            {false && authenticated && (
-              <div className="flex gap-2">
+            {/* 질문 신고 버튼 */}
+            {authenticated &&
+              currentUserId !== null &&
+              question.user &&
+              currentUserId !== question.user.id && (
                 <button
                   onClick={() => setShowReportModal(true)}
                   className="px-3 py-1.5 text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"
                 >
-                  사용자 신고
+                  신고
                 </button>
-                <button
-                  onClick={() => setShowBlockModal(true)}
-                  className="px-3 py-1.5 text-xs text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"
-                >
-                  사용자 차단
-                </button>
-              </div>
-            )}
+              )}
             {authenticated &&
               currentUserId !== null &&
               question.user &&
