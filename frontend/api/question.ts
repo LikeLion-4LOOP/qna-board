@@ -21,8 +21,8 @@ export interface Question {
   updatedAt?: string | null;
   modifiedAt?: string;
 
-  answerCount?: number;
-  viewCount?: number;
+  answerCount: number;
+  viewCount: number;
 }
 
 export interface QuestionCreateRequest {

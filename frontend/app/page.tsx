@@ -85,13 +85,7 @@ export default function Home() {
       const data = await questionApi.getQuestions();
       // 배열인지 확인하고, 배열이 아니면 빈 배열로 처리
       const questionsArray = Array.isArray(data) ? data : [];
-      // answerCount가 없는 경우를 대비해 기본값 설정
-      const normalizedQuestions = questionsArray.map((q: Question) => ({
-        ...q,
-        answerCount: q.answerCount ?? 0,
-        viewCount: q.viewCount ?? 0,
-      }));
-      setQuestions(normalizedQuestions);
+      setQuestions(questionsArray);
       setUseExampleData(false);
     } catch (err) {
       console.error("질문 목록 로드 실패:", err);
@@ -112,8 +106,8 @@ export default function Home() {
   // 인기 질문 (조회수 + 답변 수 기준)
   const popularQuestions = [...questionsArray]
     .sort((a, b) => {
-      const aScore = (a.viewCount || 0) + (a.answerCount || 0) * 2;
-      const bScore = (b.viewCount || 0) + (b.answerCount || 0) * 2;
+      const aScore = a.viewCount + a.answerCount * 2;
+      const bScore = b.viewCount + b.answerCount * 2;
       return bScore - aScore;
     })
     .slice(0, 3);
@@ -129,11 +123,8 @@ export default function Home() {
   // 통계 계산
   const stats = {
     totalQuestions: questionsArray.length,
-    totalAnswers: questionsArray.reduce(
-      (sum, q) => sum + (q.answerCount || 0),
-      0
-    ),
-    totalViews: questionsArray.reduce((sum, q) => sum + (q.viewCount || 0), 0),
+    totalAnswers: questionsArray.reduce((sum, q) => sum + q.answerCount, 0),
+    totalViews: questionsArray.reduce((sum, q) => sum + q.viewCount, 0),
     todayQuestions: questionsArray.filter((q) => {
       const today = new Date();
       const questionDate = new Date(q.createdAt);
@@ -288,7 +279,7 @@ export default function Home() {
                                 d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
                               />
                             </svg>
-                            답변 {question.answerCount || 0}
+                            답변 {question.answerCount}
                           </span>
                           <span className="flex items-center gap-1">
                             <svg
