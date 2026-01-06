@@ -9,19 +9,31 @@ import { CATEGORIES, CategoryId, getCategoryById } from "@/lib/categories";
 
 export default function NewQuestionPage() {
   const router = useRouter();
+
   const [authenticated, setAuthenticated] = useState(false);
   const [username, setUsername] = useState("");
+
   const [formData, setFormData] = useState({
     title: "",
     content: "",
     category: "" as CategoryId | "",
   });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCategorySelect, setShowCategorySelect] = useState(false);
+
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [uploadedImageIds, setUploadedImageIds] = useState<number[]>([]);
+  const [uploadedImageIdByFileKey, setUploadedImageIdByFileKey] = useState<
+    Record<string, number>
+  >({});
+
+  const getFileKey = (file: File) =>
+    `${file.name}-${file.size}-${file.lastModified}`;
+  // ✅ 작성 중 이미지 클릭 업로드를 위해 초안 질문 ID를 확보
+  const [draftQuestionId, setDraftQuestionId] = useState<number | null>(null);
+
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -41,8 +53,6 @@ export default function NewQuestionPage() {
     checkAuth();
   }, [router]);
 
-  // 이미지 미리보기 정리 (FileReader는 자동으로 정리되므로 별도 처리 불필요)
-
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -54,7 +64,7 @@ export default function NewQuestionPage() {
     }
 
     // 파일 크기 제한 (5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
     const validFiles = imageFiles.filter((file) => {
       if (file.size > maxSize) {
         alert(`${file.name} 파일이 너무 큽니다. (최대 5MB)`);
@@ -63,13 +73,13 @@ export default function NewQuestionPage() {
       return true;
     });
 
-    // 최대 5개까지 제한
+    // 최대 5개 제한
     const newImages = [...selectedImages, ...validFiles].slice(0, 5);
     if (newImages.length < selectedImages.length + validFiles.length) {
       alert("이미지는 최대 5개까지 업로드 가능합니다.");
     }
 
-    // 기존 미리보기 URL 정리
+    // 기존 미리보기 정리 (blob 기반이면 revoke 필요, dataURL은 필요 없음)
     imagePreviews.forEach((url) => {
       if (url && url.startsWith("blob:")) {
         try {
@@ -82,19 +92,14 @@ export default function NewQuestionPage() {
 
     setSelectedImages(newImages);
 
-    // 미리보기 생성 - FileReader 사용 (각 파일별로 독립적으로 처리)
+    // 미리보기 생성
+    setImagePreviews(Array(newImages.length).fill(""));
+
     const previewPromises = newImages.map((file, idx) => {
       return new Promise<string>((resolve) => {
         if (file && file instanceof File) {
           const reader = new FileReader();
-          reader.onload = (e) => {
-            const result = e.target?.result as string;
-            console.log(
-              `이미지 미리보기 생성 성공: ${idx}`,
-              result.substring(0, 50)
-            );
-            resolve(result);
-          };
+          reader.onload = (ev) => resolve(ev.target?.result as string);
           reader.onerror = (err) => {
             console.error(`이미지 읽기 실패: ${idx}`, err);
             resolve("");
@@ -106,48 +111,106 @@ export default function NewQuestionPage() {
       });
     });
 
-    // 모든 미리보기가 생성되면 상태 업데이트
-    Promise.all(previewPromises).then((previews) => {
-      console.log("모든 미리보기 생성 완료:", previews.length);
-      setImagePreviews(previews);
-    });
+    Promise.all(previewPromises).then((previews) => setImagePreviews(previews));
 
-
-    // 파일 입력 초기화 (같은 파일 다시 선택 가능하도록)
+    // 같은 파일 다시 선택 가능하도록 초기화
     e.target.value = "";
   };
 
   const handleRemoveImage = (index: number) => {
-    const newImages = selectedImages.filter((_, i) => i !== index);
-    const newPreviews = imagePreviews.filter((_, i) => i !== index);
-
-    setSelectedImages(newImages);
-    setImagePreviews(newPreviews);
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const insertImageAtCursor = (imageIndex: number) => {
+  // ✅ 초안 질문 생성 (이미지 업로드/삽입을 위해 questionId 필요)
+  const ensureDraftQuestion = async (): Promise<number> => {
+    if (draftQuestionId) return draftQuestionId;
+
+    if (!formData.category) {
+      throw new Error("카테고리를 선택해주세요.");
+    }
+    if (!formData.title.trim()) {
+      throw new Error("제목을 입력해주세요. (이미지 업로드 전에 필요)");
+    }
+
+    const currentContent =
+      contentTextareaRef.current?.value ?? formData.content;
+
+    const created = await questionApi.createQuestion({
+      title: formData.title,
+      content: currentContent, // 현재까지 작성된 내용으로 초안 생성
+      category: questionApi.mapCategoryIdToEnum(formData.category),
+    });
+
+    setDraftQuestionId(created.id);
+    return created.id;
+  };
+
+  const insertUploadedImageAtCursor = async (imageIndex: number) => {
     const textarea = contentTextareaRef.current;
     if (!textarea) return;
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
+    try {
+      setError(null);
 
-    // 플레이스홀더 삽입 (나중에 실제 이미지로 교체)
-    const placeholder = `\n[이미지_${imageIndex}_${Date.now()}]\n`;
+      const file = selectedImages[imageIndex];
+      if (!file) return;
 
-    const newContent =
-      formData.content.substring(0, start) +
-      placeholder +
-      formData.content.substring(end);
+      const qid = await ensureDraftQuestion();
 
-    setFormData({ ...formData, content: newContent });
+      const fileKey = getFileKey(file);
 
-    // 커서 위치 조정
-    setTimeout(() => {
-      textarea.focus();
-      const newCursorPos = start + placeholder.length;
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
-    }, 0);
+      // ✅ 이미 업로드 된 파일이면 업로드 생략
+      let imageId = uploadedImageIdByFileKey[fileKey];
+
+      if (!imageId) {
+        // 처음 클릭한 파일이면 1회 업로드
+        await questionApi.uploadImages(qid, [file]);
+
+        // 업로드된 이미지 목록 조회 -> 방금 업로드된 걸 찾기
+        // (가장 안전한 건 업로드 API가 id를 응답하는 것인데, 지금은 프론트만으로 해결)
+        const images = await questionApi.getQuestionImages(qid);
+
+        // "마지막"을 쓰는 대신, 가능하면 이름/사이즈로 매칭 시도 (정확도↑)
+        const matched =
+          [...images].reverse().find((img) => img.originalName === file.name) ||
+          images.at(-1);
+
+        if (!matched)
+          throw new Error("업로드된 이미지 정보를 찾지 못했습니다.");
+
+        imageId = matched.id;
+
+        // ✅ 캐시에 저장 (이 파일은 이제 업로드 완료)
+        setUploadedImageIdByFileKey((prev) => ({
+          ...prev,
+          [fileKey]: imageId!,
+        }));
+      }
+
+      // ✅ 업로드 없이도(또는 최초 업로드 후) 마크다운 삽입
+      const markdown = `\n![이미지](${questionApi.getImageUrl(imageId)})\n`;
+
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+
+      const currentContent = textarea.value ?? "";
+      const newContent =
+        currentContent.substring(0, start) +
+        markdown +
+        currentContent.substring(end);
+
+      setFormData((prev) => ({ ...prev, content: newContent }));
+
+      setTimeout(() => {
+        textarea.focus();
+        const newPos = start + markdown.length;
+        textarea.setSelectionRange(newPos, newPos);
+      }, 0);
+    } catch (e: any) {
+      console.error("이미지 삽입 실패:", e);
+      setError(e?.message || "이미지 삽입에 실패했습니다.");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -158,99 +221,32 @@ export default function NewQuestionPage() {
     try {
       if (!formData.category) {
         setError("카테고리를 선택해주세요.");
-        setLoading(false);
         return;
       }
 
-      let finalContent = formData.content;
+      const currentContent =
+        contentTextareaRef.current?.value ?? formData.content;
 
-      const createdQuestion = await questionApi.createQuestion({
+      // ✅ 초안이 이미 있으면 update로 마무리
+      if (draftQuestionId) {
+        await questionApi.updateQuestion(draftQuestionId, {
+          title: formData.title,
+          content: currentContent,
+          category: questionApi.mapCategoryIdToEnum(formData.category),
+        });
+
+        router.push(`/questions/${draftQuestionId}`);
+        return;
+      }
+
+      // ✅ 초안이 없으면 그냥 create로 생성
+      const created = await questionApi.createQuestion({
         title: formData.title,
-        content: formData.content,
+        content: currentContent,
         category: questionApi.mapCategoryIdToEnum(formData.category),
       });
 
-      // 이미지가 있으면 업로드하고 플레이스홀더를 실제 이미지로 교체
-      if (createdQuestion && createdQuestion.id && selectedImages.length > 0) {
-        try {
-          await questionApi.uploadImages(createdQuestion.id, selectedImages);
-
-          // 업로드된 이미지 목록 가져오기
-          const uploadedImages = await questionApi.getQuestionImages(
-            createdQuestion.id
-          );
-
-          // 플레이스홀더를 실제 이미지 마크다운으로 교체
-          // 모든 플레이스홀더 패턴 찾기: [이미지_인덱스_타임스탬프]
-          const placeholderPattern = /\[이미지_(\d+)_\d+\]/g;
-          const usedIndices = new Set<number>();
-
-          // 플레이스홀더를 실제 이미지로 교체
-          finalContent = finalContent.replace(
-            placeholderPattern,
-            (matchStr, indexStr) => {
-              const index = parseInt(indexStr, 10);
-              if (
-                index >= 0 &&
-                index < uploadedImages.length &&
-                !usedIndices.has(index)
-              ) {
-                usedIndices.add(index);
-                const img = uploadedImages[index];
-                return `![이미지](${questionApi.getImageUrl(img.id)})`;
-              }
-              return matchStr; // 매칭되지 않으면 원본 유지
-            }
-          );
-
-          // 플레이스홀더가 남아있으면 (클릭하지 않은 이미지) 마지막에 추가
-          const remainingPlaceholders =
-            finalContent.match(/\[이미지_\d+_\d+\]/g);
-          if (remainingPlaceholders && remainingPlaceholders.length > 0) {
-            // 사용되지 않은 이미지 찾기
-            const unusedImages = uploadedImages.filter(
-              (_, idx) => !usedIndices.has(idx)
-            );
-            if (unusedImages.length > 0) {
-              const imageMarkdowns = unusedImages
-                .map(
-                  (img) => `\n![이미지](${questionApi.getImageUrl(img.id)})\n`
-                )
-                .join("");
-              finalContent =
-                finalContent.replace(/\[이미지_\d+_\d+\]/g, "") +
-                imageMarkdowns;
-            } else {
-              finalContent = finalContent.replace(/\[이미지_\d+_\d+\]/g, "");
-            }
-          } else if (uploadedImages.length > 0 && usedIndices.size === 0) {
-            // 플레이스홀더가 하나도 없으면 (클릭하지 않은 경우) 마지막에 추가
-            const imageMarkdowns = uploadedImages
-              .map((img) => `\n![이미지](${questionApi.getImageUrl(img.id)})\n`)
-              .join("");
-            finalContent = finalContent + imageMarkdowns;
-          }
-
-          // 내용이 변경되었으면 업데이트
-          if (finalContent !== formData.content) {
-            await questionApi.updateQuestion(createdQuestion.id, {
-              title: formData.title,
-              content: finalContent,
-              category: questionApi.mapCategoryIdToEnum(formData.category),
-            });
-          }
-        } catch (imageErr: any) {
-          console.error("이미지 업로드 실패:", imageErr);
-          // 이미지 업로드 실패해도 질문은 생성되었으므로 계속 진행
-        }
-      }
-
-      // 생성된 질문의 ID를 사용하여 상세 페이지로 이동
-      if (createdQuestion && createdQuestion.id) {
-        router.push(`/questions/${createdQuestion.id}`);
-      } else {
-        router.push("/");
-      }
+      router.push(created?.id ? `/questions/${created.id}` : "/");
     } catch (err: any) {
       setError(err.response?.data?.message || "질문 작성에 실패했습니다.");
     } finally {
@@ -258,9 +254,7 @@ export default function NewQuestionPage() {
     }
   };
 
-  if (!authenticated) {
-    return null;
-  }
+  if (!authenticated) return null;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -292,7 +286,7 @@ export default function NewQuestionPage() {
             required
             value={formData.title}
             onChange={(e) =>
-              setFormData({ ...formData, title: e.target.value })
+              setFormData((prev) => ({ ...prev, title: e.target.value }))
             }
             className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
             placeholder="질문 제목을 입력하세요"
@@ -306,6 +300,7 @@ export default function NewQuestionPage() {
           >
             카테고리 <span className="text-red-500">*</span>
           </label>
+
           {formData.category ? (
             <div className="flex items-center gap-3 mb-3">
               <span
@@ -318,7 +313,9 @@ export default function NewQuestionPage() {
               </span>
               <button
                 type="button"
-                onClick={() => setFormData({ ...formData, category: "" })}
+                onClick={() =>
+                  setFormData((prev) => ({ ...prev, category: "" }))
+                }
                 className="px-3 py-2 text-sm text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               >
                 변경
@@ -349,7 +346,6 @@ export default function NewQuestionPage() {
             </button>
           )}
 
-          {/* 카테고리 선택 모달 */}
           {showCategorySelect && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col animate-fade-in">
@@ -378,13 +374,18 @@ export default function NewQuestionPage() {
                     </button>
                   </div>
                 </div>
+
                 <div className="flex-1 overflow-y-auto p-8">
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {CATEGORIES.map((category) => (
                       <button
                         key={category.id}
+                        type="button"
                         onClick={() => {
-                          setFormData({ ...formData, category: category.id });
+                          setFormData((prev) => ({
+                            ...prev,
+                            category: category.id,
+                          }));
                           setShowCategorySelect(false);
                         }}
                         className={`p-6 rounded-xl border-2 transition-all transform hover:scale-105 text-left ${
@@ -426,7 +427,7 @@ export default function NewQuestionPage() {
             rows={15}
             value={formData.content}
             onChange={(e) =>
-              setFormData({ ...formData, content: e.target.value })
+              setFormData((prev) => ({ ...prev, content: e.target.value }))
             }
             className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white resize-none"
             placeholder="질문 내용을 입력하세요"
@@ -438,6 +439,7 @@ export default function NewQuestionPage() {
           <label className="block text-sm font-semibold text-slate-700 mb-2">
             이미지 (선택사항, 최대 5개)
           </label>
+
           <div className="space-y-4">
             <input
               type="file"
@@ -448,6 +450,7 @@ export default function NewQuestionPage() {
               id="image-upload"
               disabled={selectedImages.length >= 5}
             />
+
             <label
               htmlFor="image-upload"
               className={`inline-flex items-center gap-2 px-4 py-3 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
@@ -472,12 +475,16 @@ export default function NewQuestionPage() {
               이미지 추가 ({selectedImages.length}/5)
             </label>
 
-            {/* 이미지 미리보기 */}
             {imagePreviews.length > 0 && (
               <div>
                 <p className="text-xs text-slate-600 mb-2">
-                  이미지를 클릭하면 텍스트 커서 위치에 삽입됩니다
+                  ✅ 이미지를 클릭하면 즉시 업로드되고, 커서 위치에{" "}
+                  <code className="px-1 py-0.5 bg-slate-100 rounded">
+                    ![이미지](url)
+                  </code>{" "}
+                  형태로 삽입됩니다
                 </p>
+
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {imagePreviews.map((preview, index) => (
                     <div
@@ -487,46 +494,22 @@ export default function NewQuestionPage() {
                       {preview &&
                       preview.length > 0 &&
                       preview.startsWith("data:image/") ? (
-                        <>
-                            {preview && preview.startsWith("data:image/") && (
-                                <img
-                                    src={preview}
-                                    alt={`미리보기 ${index + 1}`}
-                                    className="w-full h-48 object-contain cursor-pointer hover:opacity-90 transition-opacity"
-                                    style={{ backgroundColor: "transparent" }}
-                                    onClick={() => {
-                                        console.log(
-                                            "이미지 클릭:",
-                                            index,
-                                            "커서 위치:",
-                                            contentTextareaRef.current?.selectionStart
-                                        );
-                                        insertImageAtCursor(index);
-                                    }}
-                                    title="클릭하여 텍스트 커서 위치에 삽입"
-                                    onLoad={(e) => {
-                                        console.log(
-                                            "이미지 로드 성공:",
-                                            index,
-                                            "크기:",
-                                            (e.target as HTMLImageElement).naturalWidth,
-                                            "x",
-                                            (e.target as HTMLImageElement).naturalHeight
-                                        );
-                                    }}
-                                    onError={(e) => {
-                                        console.error(
-                                            "이미지 로드 실패:",
-                                            index,
-                                            preview.substring(0, 50)
-                                        );
-                                        const target = e.target as HTMLImageElement;
-                                        target.style.display = "none";
-                                    }}
-                                />
-                            )}
-                            
-                        </>
+                        <img
+                          src={preview}
+                          alt={`미리보기 ${index + 1}`}
+                          className="w-full h-48 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => insertUploadedImageAtCursor(index)}
+                          title="클릭하면 업로드 후 커서 위치에 삽입"
+                          onError={(e) => {
+                            console.error(
+                              "이미지 로드 실패:",
+                              index,
+                              preview.substring(0, 50)
+                            );
+                            (e.target as HTMLImageElement).style.display =
+                              "none";
+                          }}
+                        />
                       ) : (
                         <div className="w-full h-48 bg-slate-100 flex items-center justify-center border-2 border-dashed border-slate-300">
                           <span className="text-slate-400 text-sm">
@@ -536,7 +519,7 @@ export default function NewQuestionPage() {
                           </span>
                         </div>
                       )}
-                        
+
                       <button
                         type="button"
                         onClick={(e) => {
@@ -572,9 +555,11 @@ export default function NewQuestionPage() {
             type="button"
             onClick={() => router.back()}
             className="px-6 py-3 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold transition-colors"
+            disabled={loading}
           >
             취소
           </button>
+
           <button
             type="submit"
             disabled={loading}
@@ -582,7 +567,7 @@ export default function NewQuestionPage() {
           >
             {loading ? (
               <span className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 작성 중...
               </span>
             ) : (

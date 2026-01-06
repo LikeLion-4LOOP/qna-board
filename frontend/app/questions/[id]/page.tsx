@@ -146,7 +146,9 @@ export default function QuestionDetailPage() {
         reason,
       });
       if (result.hidden) {
-        alert("신고가 접수되었습니다. 신고 누적으로 인해 해당 글이 숨김 처리되었습니다.");
+        alert(
+          "신고가 접수되었습니다. 신고 누적으로 인해 해당 글이 숨김 처리되었습니다."
+        );
         router.push("/");
       } else {
         alert(`신고가 접수되었습니다. (누적 신고: ${result.totalReports}건)`);
@@ -350,63 +352,6 @@ export default function QuestionDetailPage() {
             return <div key={index}>{line || "\u00A0"}</div>;
           })}
         </div>
-          {images.length > 0 && (
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {images.map((image) => (
-                      <img
-                          key={image.id}
-                          src={`http://localhost:8080/api/questions/images/${image.id}`}
-                          alt={image.originalName}
-                          className="rounded-xl border border-slate-200 cursor-pointer"
-                          onClick={() =>
-                              window.open(
-                                  `http://localhost:8080/api/questions/images/${image.id}`,
-                                  "_blank"
-                              )
-                          }
-                      />
-                  ))}
-              </div>
-          )}
-        {images.length > 0 && (
-  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-    {images.map((image) => (
-      <img
-        key={image.id}
-        src={`http://localhost:8080/api/questions/images/${image.id}`}
-        alt={image.originalName}
-        className="rounded-xl border border-slate-200 cursor-pointer"
-        onClick={() =>
-          window.open(
-            `http://localhost:8080/api/questions/images/${image.id}`,
-            "_blank"
-          )
-        }
-      />
-    ))}
-  </div>
-)}
-        {/* 이미지가 content에 포함되지 않은 경우 하단에 표시 */}
-        {images.length > 0 &&
-          !question.content.match(/!\[.*?\]\(.*?\/images\/\d+.*?\)/) && (
-            <div className="mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {images.map((image) => (
-                  <div
-                    key={image.id}
-                    className="relative border border-slate-200 rounded-xl overflow-hidden group"
-                  >
-                    <img
-                      src={image.url}
-                      alt={image.originalName}
-                      className="w-full h-auto object-contain cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => window.open(image.url, "_blank")}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
         <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-200">
           <button
