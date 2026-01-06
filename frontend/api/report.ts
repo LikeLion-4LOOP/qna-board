@@ -57,7 +57,7 @@ export interface HiddenAnswer {
 }
 
 export interface HiddenComment {
-  commentId: number;
+  id: number;
   postId: number;
   isQuestion: boolean;
   content: string;
