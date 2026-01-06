@@ -1,6 +1,7 @@
 package com.example.qnaboard.service.comment;
 
 import com.example.qnaboard.domain.comment.Comment;
+import com.example.qnaboard.domain.report.ReportTargetType;
 import com.example.qnaboard.domain.user.User;
 import com.example.qnaboard.dto.comment.request.CommentCreateRequest;
 import com.example.qnaboard.dto.comment.request.CommentUpdateRequest;
@@ -153,7 +154,7 @@ public class CommentService {
         Long writerId = comment.getUser().getId();
         userPointService.cancelRewardForComment(writerId);
         commentRepository.delete(comment);
-        reportRepository.deleteByTargetId(commentId);
+        reportRepository.deleteByTargetTypeAndTargetId(ReportTargetType.COMMENT,commentId);
     }
 
     /* ================= 공통 로직 ================= */

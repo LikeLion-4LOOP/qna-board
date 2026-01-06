@@ -2,6 +2,7 @@ package com.example.qnaboard.service.question;
 
 import com.example.qnaboard.domain.question.Question;
 import com.example.qnaboard.domain.question.QuestionCategory;
+import com.example.qnaboard.domain.report.ReportTargetType;
 import com.example.qnaboard.domain.user.User;
 import com.example.qnaboard.dto.question.request.QuestionCreateRequest;
 import com.example.qnaboard.dto.question.request.QuestionUpdateRequest;
@@ -119,7 +120,7 @@ public class QuestionService {
         Long writerId = question.getUser().getId();
         userPointService.cancelRewardForQuestion(writerId);
         questionRepository.delete(question);
-        reportRepository.deleteByTargetId(questionId);
+        reportRepository.deleteByTargetTypeAndTargetId(ReportTargetType.QUESTION,questionId);
     }
 
     /**
