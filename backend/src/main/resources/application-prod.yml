@@ -33,6 +33,6 @@ jwt:
 
 report:
   threshold:
-    question: 5
-    answer: 5
-    comment: 5
+    question: 1
+    answer: 1
+    comment: 1
