@@ -25,10 +25,18 @@ function QuestionsPageContent() {
     null
   );
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const pageSize = 10;
+
+  useEffect(() => {
+    setCurrentPage(0); // 필터 변경 시 첫 페이지로 리셋
+  }, [searchQuery, sortBy, selectedCategory]);
 
   useEffect(() => {
     loadQuestions();
-  }, [searchQuery, sortBy, selectedCategory]);
+  }, [searchQuery, sortBy, selectedCategory, currentPage]);
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -43,14 +51,18 @@ function QuestionsPageContent() {
         ? questionApi.mapCategoryIdToEnum(selectedCategory)
         : undefined;
 
-      // 백엔드에서 검색, 정렬, 카테고리 필터 처리
-      const data = await questionApi.getQuestions(
+      // 백엔드에서 검색, 정렬, 카테고리 필터 처리 (페이징 포함)
+      const pageData = await questionApi.getQuestions(
         searchQuery || undefined,
         sortBy,
-        categoryEnum
+        categoryEnum,
+        currentPage,
+        pageSize
       );
-      setQuestions(data);
-      setFilteredQuestions(data);
+      setQuestions(pageData.content);
+      setFilteredQuestions(pageData.content);
+      setTotalPages(pageData.totalPages);
+      setTotalElements(pageData.totalElements);
     } catch (err) {
       setError("질문 목록을 불러오는데 실패했습니다.");
       console.error(err);
@@ -149,7 +161,7 @@ function QuestionsPageContent() {
               카테고리로 찾기
             </button>
 
-          {/* 정렬 선택 */}
+            {/* 정렬 선택 */}
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
@@ -184,15 +196,15 @@ function QuestionsPageContent() {
               </div>
               <button
                 onClick={() => {
-                setSelectedCategory(null);
-                setSelectedTag(null);
-                setSearchInput("");
-                setSearchQuery("");
-              }}
-              className="px-3 py-1.5 text-sm text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              필터 초기화
-            </button>
+                  setSelectedCategory(null);
+                  setSelectedTag(null);
+                  setSearchInput("");
+                  setSearchQuery("");
+                }}
+                className="px-3 py-1.5 text-sm text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                필터 초기화
+              </button>
             </div>
           </div>
         )}
@@ -361,7 +373,7 @@ function QuestionsPageContent() {
                 </div>
               </div>
               <p className="text-slate-600 mb-4 line-clamp-2 leading-relaxed">
-                {question.content.replace(/!\[.*?\]\(.*?\)/g, '').trim()}
+                {question.content.replace(/!\[.*?\]\(.*?\)/g, "").trim()}
               </p>
               <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                 <div className="flex items-center gap-4">
@@ -422,6 +434,63 @@ function QuestionsPageContent() {
           ))}
         </div>
       ) : null}
+
+      {/* 페이징 UI */}
+      {!loading && !error && totalPages > 1 && (
+        <div className="mt-8 flex items-center justify-center gap-2">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
+            disabled={currentPage === 0}
+            className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            이전
+          </button>
+
+          <div className="flex items-center gap-1">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum: number;
+              if (totalPages <= 5) {
+                pageNum = i;
+              } else if (currentPage < 3) {
+                pageNum = i;
+              } else if (currentPage > totalPages - 4) {
+                pageNum = totalPages - 5 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    currentPage === pageNum
+                      ? "bg-indigo-600 text-white"
+                      : "border border-slate-300 text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  {pageNum + 1}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1))
+            }
+            disabled={currentPage >= totalPages - 1}
+            className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            다음
+          </button>
+
+          <span className="ml-4 text-sm text-slate-600">
+            전체 {totalElements}개 중 {currentPage * pageSize + 1}-
+            {Math.min((currentPage + 1) * pageSize, totalElements)}개 표시
+          </span>
+        </div>
+      )}
 
       {/* 카테고리 모달 */}
       <CategoryModal

@@ -64,28 +64,52 @@ export const questionApi = {
   getQuestions: async (
     search?: string,
     sortBy?: string,
-    category?: string
-  ): Promise<Question[]> => {
+    category?: string,
+    page?: number,
+    size?: number
+  ): Promise<{
+    content: Question[];
+    totalElements: number;
+    totalPages: number;
+    number: number;
+    size: number;
+  }> => {
     const params: Record<string, string> = {};
     if (search) params.search = search;
     if (sortBy) params.sortBy = sortBy;
     if (category) params.category = category;
-    const response = await apiClient.get<unknown>("/api/questions", { params }); // any->unknown으로 변경
-    // Spring Data Page 객체인 경우 content 필드에서 배열 추출
+    if (page !== undefined) params.page = page.toString();
+    if (size !== undefined) params.size = size.toString();
+    const response = await apiClient.get<unknown>("/api/questions", { params });
+    // Spring Data Page 객체인 경우
     if (
       response.data &&
       typeof response.data === "object" &&
       "content" in response.data
     ) {
-      const page = response.data as { content: Question[] };
-      return Array.isArray(page.content) ? page.content : [];
+      const pageData = response.data as {
+        content: Question[];
+        totalElements: number;
+        totalPages: number;
+        number: number;
+        size: number;
+      };
+      return {
+        content: Array.isArray(pageData.content) ? pageData.content : [],
+        totalElements: pageData.totalElements || 0,
+        totalPages: pageData.totalPages || 0,
+        number: pageData.number || 0,
+        size: pageData.size || 10,
+      };
     }
-    // 이미 배열인 경우 그대로 반환
-    if (Array.isArray(response.data)) {
-      return response.data as Question[];
-    }
-    // 그 외의 경우 빈 배열 반환
-    return [];
+    // 그 외의 경우 빈 페이지 반환
+    return {
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      number: 0,
+      size: size || 10,
+    };
   },
 
   getQuestion: async (id: number): Promise<Question> => {
