@@ -44,13 +44,14 @@ public class UserService {
         String password = req.getPassword();
         String username = req.getUsername();
 
-
+        validatePassword(req.getPassword());
         if(userRepository.existsByUserId(userid)){
             throw new BusinessException(UserErrorCode.ID_ALREADY_EXISTS);
         }
         if (userRepository.existsByUsername(username)) {
             throw new BusinessException(UserErrorCode.USERNAME_ALREADY_EXISTS);
         }
+
 
 
         String encoded = passwordEncoder.encode(password);
@@ -75,7 +76,7 @@ public class UserService {
             throw new BusinessException(UserErrorCode.WRONG_PASSWORD);
         }
 
-        validateNewPassword(request.getChangePw());
+        validatePassword(request.getChangePw());
 
         user.changePassword(passwordEncoder.encode(request.getChangePw()));
 
@@ -180,7 +181,7 @@ public class UserService {
         return text.substring(0, maxLen);
     }
 
-    private void validateNewPassword(String newPassword) {
+    private void validatePassword(String newPassword) {
         if (newPassword == null || newPassword.length() < 8) {
             throw new BusinessException(UserErrorCode.PASSWORD_POLICY_VIOLATION);
         }
