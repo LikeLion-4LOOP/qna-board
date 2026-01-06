@@ -28,10 +28,18 @@ export default function SignupPage() {
       // 더 자세한 에러 메시지 표시
       if (err.response) {
         // 서버에서 응답이 온 경우
-        const errorMessage = err.response.data?.message || err.response.data?.error || '회원가입에 실패했습니다.';
         const status = err.response.status;
+        let errorMessage = err.response.data?.message || err.response.data?.error || '회원가입에 실패했습니다.';
+        
+        // validation 에러인 경우 (400 에러)
         if (status === 400) {
-          setError(`입력 정보를 확인해주세요. (${errorMessage})`);
+          // validation 에러 메시지가 있으면 그대로 사용
+          if (err.response.data?.message && err.response.data.message.includes('비밀번호')) {
+            errorMessage = err.response.data.message;
+          } else {
+            errorMessage = `입력 정보를 확인해주세요. ${errorMessage}`;
+          }
+          setError(errorMessage);
         } else if (status === 409) {
           setError(`이미 사용 중인 사용자 ID입니다. (${errorMessage})`);
         } else {

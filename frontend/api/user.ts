@@ -13,6 +13,11 @@ export interface UpdateUsernameRequest {
   username: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPw: string;
+  changePw: string;
+}
+
 export interface MyQuestionSummaryResponse {
   id: number;
   title: string;
@@ -61,6 +66,10 @@ export const userApi = {
       username,
     });
     return response.data;
+  },
+
+  changePassword: async (data: ChangePasswordRequest): Promise<void> => {
+    await apiClient.patch("/users/change-password", data);
   },
 
   getMyQuestions: async (

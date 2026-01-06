@@ -10,6 +10,7 @@ import {
   MyCommentSummaryResponse,
   PointHistoryResponse,
   PageResponse,
+  ChangePasswordRequest,
 } from "@/api/user";
 import { isAuthenticated, clearTokens } from "@/lib/auth";
 import { authApi } from "@/api/auth";
@@ -37,6 +38,13 @@ export default function ProfilePage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [passwordData, setPasswordData] = useState<ChangePasswordRequest>({
+    currentPw: "",
+    changePw: "",
+  });
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -165,6 +173,49 @@ export default function ProfilePage() {
     } catch (err) {
       alert("사용자 이름 수정에 실패했습니다.");
       console.error(err);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError(null);
+    
+    if (!passwordData.currentPw || !passwordData.changePw) {
+      setPasswordError("현재 비밀번호와 새 비밀번호를 모두 입력해주세요.");
+      return;
+    }
+
+    try {
+      setChangingPassword(true);
+      await userApi.changePassword(passwordData);
+      alert("비밀번호가 변경되었습니다. 다시 로그인해주세요.");
+      setPasswordData({ currentPw: "", changePw: "" });
+      setShowChangePassword(false);
+      // 비밀번호 변경 후 로그아웃 처리 (백엔드에서 refreshToken 무효화하므로)
+      clearTokens();
+      router.push("/auth/login");
+    } catch (err: any) {
+      console.error("비밀번호 변경 실패:", err);
+      if (err.response) {
+        const status = err.response.status;
+        let errorMessage = err.response.data?.message || err.response.data?.error || "비밀번호 변경에 실패했습니다.";
+        
+        // validation 에러인 경우 (400 에러)
+        if (status === 400) {
+          // validation 에러 메시지가 있으면 그대로 사용
+          if (err.response.data?.message && err.response.data.message.includes("비밀번호")) {
+            errorMessage = err.response.data.message;
+          } else {
+            errorMessage = `입력 정보를 확인해주세요. ${errorMessage}`;
+          }
+        } else if (status === 404 && errorMessage.includes("비밀번호가 일치하지 않습니다")) {
+          errorMessage = "현재 비밀번호가 일치하지 않습니다.";
+        }
+        setPasswordError(errorMessage);
+      } else {
+        setPasswordError("비밀번호 변경에 실패했습니다.");
+      }
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -363,6 +414,83 @@ export default function ProfilePage() {
                 수정
               </button>
             </div>
+          )}
+        </div>
+
+        {/* 비밀번호 변경 섹션 */}
+        <div className="mb-6 pt-6 border-t border-slate-200">
+          <label className="block text-sm font-semibold text-slate-700 mb-2">
+            비밀번호 변경
+          </label>
+          {showChangePassword ? (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1">
+                  현재 비밀번호
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.currentPw}
+                  onChange={(e) =>
+                    setPasswordData({ ...passwordData, currentPw: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
+                  placeholder="현재 비밀번호를 입력하세요"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1">
+                  새 비밀번호
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.changePw}
+                  onChange={(e) =>
+                    setPasswordData({ ...passwordData, changePw: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
+                  placeholder="새 비밀번호를 입력하세요"
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  비밀번호는 8자 이상이며 문자와 숫자를 포함해야 합니다.
+                </p>
+              </div>
+              {passwordError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center gap-2">
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {passwordError}
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleChangePassword}
+                  disabled={changingPassword}
+                  className="px-5 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {changingPassword ? "변경 중..." : "변경"}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowChangePassword(false);
+                    setPasswordData({ currentPw: "", changePw: "" });
+                    setPasswordError(null);
+                  }}
+                  disabled={changingPassword}
+                  className="px-5 py-3 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300 disabled:opacity-50"
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowChangePassword(true)}
+              className="px-4 py-2 text-sm text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg font-medium transition-colors"
+            >
+              비밀번호 변경
+            </button>
           )}
         </div>
 
