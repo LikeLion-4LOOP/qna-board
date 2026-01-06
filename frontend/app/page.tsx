@@ -82,9 +82,15 @@ export default function Home() {
     try {
       setLoading(true);
       setError(null);
-      const data = await questionApi.getQuestions();
-      // 배열인지 확인하고, 배열이 아니면 빈 배열로 처리
-      const questionsArray = Array.isArray(data) ? data : [];
+      // 통계를 위해 전체 데이터 가져오기 (큰 size 사용)
+      const pageData = await questionApi.getQuestions(
+        undefined,
+        undefined,
+        undefined,
+        0,
+        10000
+      );
+      const questionsArray = pageData.content || [];
       setQuestions(questionsArray);
       setUseExampleData(false);
     } catch (err) {
