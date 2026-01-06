@@ -10,6 +10,7 @@ import com.example.qnaboard.exception.common.BusinessException;
 import com.example.qnaboard.repository.answer.AnswerRepository;
 import com.example.qnaboard.repository.comment.CommentRepository;
 import com.example.qnaboard.repository.question.QuestionRepository;
+import com.example.qnaboard.repository.report.ReportRepository;
 import com.example.qnaboard.service.answer.AnswerServiceImpl;
 import com.example.qnaboard.service.comment.CommentService;
 import com.example.qnaboard.service.question.QuestionService;
@@ -26,6 +27,7 @@ public class AdminReportService {
     private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
     private final CommentRepository commentRepository;
+    private final ReportRepository reportRepository;
 
     private final QuestionService questionService;
     private final AnswerServiceImpl answerService;
@@ -57,15 +59,24 @@ public class AdminReportService {
     @Transactional
     public void restore(ReportTargetType type, Long id) {
         switch (type) {
-            case QUESTION -> questionRepository.findById(id)
-                    .orElseThrow(() -> new BusinessException(QuestionErrorCode.QUESTION_NOT_FOUND))
-                    .unhide();
-            case ANSWER -> answerRepository.findById(id)
-                    .orElseThrow(() -> new BusinessException(AnswerErrorCode.ANSWER_NOT_FOUND))
-                    .unhide();
-            case COMMENT -> commentRepository.findById(id)
-                    .orElseThrow(() -> new BusinessException(CommentErrorCode.COMMENT_NOT_FOUND))
-                    .unhide();
+            case QUESTION -> {
+                questionRepository.findById(id)
+                        .orElseThrow(() -> new BusinessException(QuestionErrorCode.QUESTION_NOT_FOUND))
+                        .unhide();
+                reportRepository.deleteByTargetTypeAndTargetId(ReportTargetType.QUESTION,id);
+            }
+            case ANSWER -> {
+                answerRepository.findById(id)
+                        .orElseThrow(() -> new BusinessException(AnswerErrorCode.ANSWER_NOT_FOUND))
+                        .unhide();
+                reportRepository.deleteByTargetTypeAndTargetId(ReportTargetType.ANSWER,id);
+            }
+            case COMMENT -> {
+                commentRepository.findById(id)
+                        .orElseThrow(() -> new BusinessException(CommentErrorCode.COMMENT_NOT_FOUND))
+                        .unhide();
+                reportRepository.deleteByTargetTypeAndTargetId(ReportTargetType.COMMENT,id);
+            }
         }
     }
 }

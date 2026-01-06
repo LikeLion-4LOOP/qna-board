@@ -3,6 +3,7 @@ package com.example.qnaboard.service.answer;
 import com.example.qnaboard.domain.answer.Answer;
 import com.example.qnaboard.domain.answer.AnswerVote;
 import com.example.qnaboard.domain.question.Question;
+import com.example.qnaboard.domain.report.ReportTargetType;
 import com.example.qnaboard.domain.user.User;
 import com.example.qnaboard.dto.answer.AnswerCreateRequest;
 import com.example.qnaboard.dto.answer.AnswerResponseDto;
@@ -106,7 +107,7 @@ public class AnswerServiceImpl implements AnswerService {
         userPointService.cancelRewardForAnswer(writerId);
         userPointService.cancelRewardForSelectedAnswer(writerId);
         answerRepository.delete(answer);
-        reportRepository.deleteByTargetId(answerId);
+        reportRepository.deleteByTargetTypeAndTargetId(ReportTargetType.ANSWER,answerId);
     }
 
     @Override
