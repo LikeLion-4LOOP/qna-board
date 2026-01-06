@@ -99,8 +99,20 @@ public class AnswerController {
     @GetMapping("/answers/{answerId}")
     public AnswerResponseDto getAnswerDetail(@PathVariable Long answerId) {
         return answerService.getAnswerDetail(answerId);
-
     }
+    
+    /**
+     * 추천 여부 확인 (로그인 필요)
+     * GET /api/answers/{answerId}/vote/check
+     */
+    @GetMapping("/answers/{answerId}/vote/check")
+    public boolean checkVoteStatus(
+            @PathVariable Long answerId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return answerService.checkVoteStatus(answerId, userDetails.getUserId());
+    }
+    
     /**
      * 7) 답변 추천 취소 (로그인 필요)
      * DELETE /api/answers/{answerId}/vote

@@ -96,6 +96,13 @@ export const answerApi = {
   unvoteAnswer: async (answerId: number): Promise<void> => {
     await apiClient.delete(`/api/answers/${answerId}/vote`);
   },
+
+  checkVoteStatus: async (answerId: number): Promise<boolean> => {
+    const response = await apiClient.get<boolean>(
+      `/api/answers/${answerId}/vote/check`
+    );
+    return response.data;
+  },
 };
 
 

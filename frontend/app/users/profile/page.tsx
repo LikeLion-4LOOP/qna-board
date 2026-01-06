@@ -248,11 +248,15 @@ export default function ProfilePage() {
     const typeMap: Record<string, string> = {
       LOGIN_DAILY: "일일 로그인",
       POST_QUESTION: "질문 작성",
+      DELETE_QUESTION: "질문 삭제",
       POST_ANSWER: "답변 작성",
+      DELETE_ANSWER: "답변 삭제",
       POST_COMMENT: "댓글 작성",
+      DELETE_COMMENT: "댓글 삭제",
       VOTE_REWARD: "추천 보상",
       VOTE_CANCEL: "추천 취소",
       SELECTED_ANSWER: "답변 채택",
+      CANCEL_ANSWER: "답변 채택 취소",
     };
     return typeMap[type] || type;
   };
